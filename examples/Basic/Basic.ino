@@ -6,7 +6,7 @@ const char *password = "<PASSWORD>";
 
 
 
-NTPClient timeClient();
+NTPClient timeClient;
 
 void setup(){
   Serial.begin(115200);

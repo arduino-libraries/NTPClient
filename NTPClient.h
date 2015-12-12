@@ -26,6 +26,7 @@ class NTPClient {
     void          sendNTPPacket(IPAddress _timeServerIP);
 
   public:
+    NTPClient();
     NTPClient(int timeOffset);
     NTPClient(const char* poolServerName);
     NTPClient(const char* poolServerName, int timeOffset);

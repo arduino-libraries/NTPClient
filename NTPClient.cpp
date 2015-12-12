@@ -21,6 +21,8 @@
 
 #include "NTPClient.h"
 
+NTPClient::NTPClient() {}
+
 NTPClient::NTPClient(int timeOffset) {
   this->_timeOffset     = timeOffset;
 }
