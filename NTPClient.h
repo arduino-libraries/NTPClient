@@ -33,13 +33,6 @@ class NTPClient {
     NTPClient(const char* poolServerName, int timeOffset, int updateInterval);
 
     /**
-     * Starts the NTPClient
-     * This will create the UDP Socket and get the first update from the NTP server. This must be called after
-     * a WiFi connection is established.
-     */
-    void begin();
-
-    /**
      * This should be called in the main loop of your application. By default an update from the NTP Server is only
      * made every 60 seconds. This can be configured in the NTPClient constructor.
      */

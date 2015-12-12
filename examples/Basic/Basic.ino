@@ -17,10 +17,6 @@ void setup(){
     delay ( 500 );
     Serial.print ( "." );
   }
-
-  // Start the NTPClient after an WiFi connection is established
-  timeClient.begin();
-
 }
 
 void loop() {

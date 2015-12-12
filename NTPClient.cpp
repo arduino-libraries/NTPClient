@@ -42,16 +42,6 @@ NTPClient::NTPClient(const char* poolServerName, int timeOffset, int updateInter
   this->_updateInterval = updateInterval;
 }
 
-void NTPClient::begin() {
-  #ifdef DEBUG_NTPClient
-    Serial.println("Begin NTPClient");
-    Serial.print("Start udp connection on port: ");
-    Serial.println(this->_port);
-  #endif
-  this->_udp.begin(this->_port);
-  this->forceUpdate();
-}
-
 void NTPClient::forceUpdate() {
   #ifdef DEBUG_NTPClient
     Serial.println("Update from NTP Server");
@@ -86,8 +76,9 @@ void NTPClient::forceUpdate() {
 }
 
 void NTPClient::update() {
-  unsigned long runtime = millis();
-  if (runtime - this->_lastUpdate >= this->_updateInterval && this->_updateInterval != 0) {
+  if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
+    || this->_lastUpdate == 0) {                                // Update if there was no update yet.
+    if (this->_lastUpdate == 0) this->_udp.begin(this->_port);  // Start _udp if there was no update yet.
     this->forceUpdate();
   }
 }
