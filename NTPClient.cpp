@@ -1,7 +1,7 @@
-/** 
+/**
  * The MIT License (MIT)
  * Copyright (c) 2015 by Fabrice Weinberg
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -50,14 +50,14 @@ void NTPClient::begin() {
   this->forceUpdate();
 }
 
-void NTPClient::forceUpdate() {   
+void NTPClient::forceUpdate() {
   #ifdef DEBUG_NTPClient
     Serial.println("Update from NTP Server");
   #endif
-    
+
   IPAddress address;
   WiFi.hostByName(this->_poolServerName, address);
-  
+
   this->sendNTPPacket(address);
 
   // Wait till data is there or timeout...
@@ -69,9 +69,9 @@ void NTPClient::forceUpdate() {
     if (timeout > 100) return; // timeout after 1000 ms
     timeout++;
   } while (cb == 0);
-  
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time 
-  
+
+  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
+
   this->_udp.read(this->_packetBuffer, NTP_PACKET_SIZE);
 
   unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
@@ -79,13 +79,13 @@ void NTPClient::forceUpdate() {
   // combine the four bytes (two words) into a long integer
   // this is NTP time (seconds since Jan 1 1900):
   unsigned long secsSince1900 = highWord << 16 | lowWord;
-  
+
   this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
 }
 
 void NTPClient::update() {
   unsigned long runtime = millis();
-  if (runtime - this->_lastUpdate >= this->_updateInterval && this->_updateInterval != 0) { 
+  if (runtime - this->_lastUpdate >= this->_updateInterval && this->_updateInterval != 0) {
     this->forceUpdate();
   }
 }
@@ -111,10 +111,10 @@ String NTPClient::getFormattedTime() {
   unsigned long rawTime = this->getRawTime();
   unsigned long hours = (rawTime % 86400L) / 3600;
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
-  
+
   unsigned long minutes = (rawTime % 3600) / 60;
   String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
-  
+
   unsigned long seconds = rawTime % 60;
   String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
 
