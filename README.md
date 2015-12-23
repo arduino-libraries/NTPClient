@@ -10,7 +10,7 @@ const char *ssid     = "<SSID>";
 const char *password = "<PASSWORD>";
 
 // By default 'time.nist.gov' is used.
-NTPClient timeClient();
+NTPClient timeClient;
 
 // You can specify the time server pool and the offset, (in seconds)
 // additionaly you can specify the update interval (in milliseconds).
