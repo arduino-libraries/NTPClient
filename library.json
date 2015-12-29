@@ -1,0 +1,12 @@
+{
+  "name": "NTPClient",
+  "keywords": "ntp, client, time",
+  "description": "A NTPClient to connect to a time server",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/FWeinb/NTPClient.git"
+  },
+  "frameworks": "arduino",
+  "platforms": "espressif"
+}
