@@ -89,13 +89,15 @@ unsigned long NTPClient::getRawTime() {
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
+String NTPClient::getDay() {
+  return String(((this->getRawTime()  / 86400L) + 4 ) % 7); //0 is Sunday
+}
 String NTPClient::getHours() {
   return String((this->getRawTime()  % 86400L) / 3600);
 }
 String NTPClient::getMinutes() {
   return String((this->getRawTime() % 3600) / 60);
 }
-
 String NTPClient::getSeconds() {
   return String(this->getRawTime() % 60);
 }

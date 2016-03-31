@@ -43,6 +43,7 @@ class NTPClient {
      */
     void forceUpdate();
 
+    String getDay();
     String getHours();
     String getMinutes();
     String getSeconds();
