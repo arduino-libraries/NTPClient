@@ -11,6 +11,7 @@ NTPClient         KEYWORD1
 begin             KEYWORD2
 update            KEYWORD2
 forceUpdate       KEYWORD2
+getDay            KEYWORD2
 getHours          KEYWORD2
 getMinutes        KEYWORD2
 getSeconds        KEYWORD2
