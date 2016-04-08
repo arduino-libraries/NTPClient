@@ -4,10 +4,16 @@ Connect to a NTP server, here is how:
 
 ```cpp
 #include <NTPClient.h>
+// change next line to use with another board/shield
 #include <ESP8266WiFi.h>
+//#include <WiFi.h> // for WiFi shield
+//#include <WiFi101.h> // for WiFi 101 shield or MKR1000
+#include <WiFiUdp.h>
 
 const char *ssid     = "<SSID>";
 const char *password = "<PASSWORD>";
+
+WiFiUDP ntpUDP(ntpUDP);
 
 // By default 'time.nist.gov' is used.
 NTPClient timeClient;

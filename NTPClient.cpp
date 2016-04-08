@@ -21,22 +21,28 @@
 
 #include "NTPClient.h"
 
-NTPClient::NTPClient() {}
+NTPClient::NTPClient(UDP& udp) {
+  this->_udp            = &udp;
+}
 
-NTPClient::NTPClient(int timeOffset) {
+NTPClient::NTPClient(UDP& udp, int timeOffset) {
+  this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
 }
 
-NTPClient::NTPClient(const char* poolServerName) {
+NTPClient::NTPClient(UDP& udp, const char* poolServerName) {
+  this->_udp            = &udp;
   this->_poolServerName = poolServerName;
 }
 
-NTPClient::NTPClient(const char* poolServerName, int timeOffset) {
+NTPClient::NTPClient(UDP& udp, const char* poolServerName, int timeOffset) {
+  this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
 }
 
-NTPClient::NTPClient(const char* poolServerName, int timeOffset, int updateInterval) {
+NTPClient::NTPClient(UDP& udp, const char* poolServerName, int timeOffset, int updateInterval) {
+  this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
   this->_updateInterval = updateInterval;
@@ -47,24 +53,21 @@ void NTPClient::forceUpdate() {
     Serial.println("Update from NTP Server");
   #endif
 
-  IPAddress address;
-  WiFi.hostByName(this->_poolServerName, address);
-
-  this->sendNTPPacket(address);
+  this->sendNTPPacket();
 
   // Wait till data is there or timeout...
   byte timeout = 0;
   int cb = 0;
   do {
     delay ( 10 );
-    cb = this->_udp.parsePacket();
+    cb = this->_udp->parsePacket();
     if (timeout > 100) return; // timeout after 1000 ms
     timeout++;
   } while (cb == 0);
 
   this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
 
-  this->_udp.read(this->_packetBuffer, NTP_PACKET_SIZE);
+  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
 
   unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
   unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
@@ -78,7 +81,7 @@ void NTPClient::forceUpdate() {
 void NTPClient::update() {
   if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
     || this->_lastUpdate == 0) {                                // Update if there was no update yet.
-    if (this->_lastUpdate == 0) this->_udp.begin(this->_port);  // Start _udp if there was no update yet.
+    if (this->_lastUpdate == 0) this->_udp->begin(this->_port);  // Start _udp if there was no update yet.
     this->forceUpdate();
   }
 }
@@ -116,7 +119,7 @@ String NTPClient::getFormattedTime() {
   return hoursStr + ":" + minuteStr + ":" + secondStr;
 }
 
-void NTPClient::sendNTPPacket(IPAddress ip) {
+void NTPClient::sendNTPPacket() {
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
@@ -133,8 +136,8 @@ void NTPClient::sendNTPPacket(IPAddress ip) {
 
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
-  this->_udp.beginPacket(ip, 123); //NTP requests are to port 123
-  this->_udp.write(this->_packetBuffer, NTP_PACKET_SIZE);
-  this->_udp.endPacket();
+  this->_udp->beginPacket(this->_poolServerName, 123); //NTP requests are to port 123
+  this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
+  this->_udp->endPacket();
 }
 
