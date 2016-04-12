@@ -31,6 +31,7 @@ void setup(){
     Serial.print ( "." );
   }
 
+  timeClient.begin();
 }
 
 void loop() {

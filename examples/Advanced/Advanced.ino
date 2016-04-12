@@ -23,6 +23,8 @@ void setup(){
     delay ( 500 );
     Serial.print ( "." );
   }
+
+  timeClient.begin();
 }
 
 void loop() {
