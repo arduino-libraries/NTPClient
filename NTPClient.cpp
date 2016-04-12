@@ -56,6 +56,8 @@ void NTPClient::begin(int port) {
   this->_port = port;
 
   this->_udp->begin(this->_port);
+
+  this->_udpSetup = true;
 }
 
 void NTPClient::forceUpdate() {
@@ -91,6 +93,7 @@ void NTPClient::forceUpdate() {
 void NTPClient::update() {
   if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
     || this->_lastUpdate == 0) {                                // Update if there was no update yet.
+    if (!this->_udpSetup) this->begin();                         // setup the UDP client if needed
     this->forceUpdate();
   }
 }
@@ -130,6 +133,8 @@ String NTPClient::getFormattedTime() {
 
 void NTPClient::end() {
   this->_udp->stop();
+
+  this->_udpSetup = false;
 }
 
 void NTPClient::sendNTPPacket() {

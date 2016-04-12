@@ -11,6 +11,7 @@
 class NTPClient {
   private:
     UDP*          _udp;
+    bool          _udpSetup       = false;
 
     const char*   _poolServerName = "time.nist.gov"; // Default time server
     int           _port           = NTP_DEFAULT_LOCAL_PORT;
