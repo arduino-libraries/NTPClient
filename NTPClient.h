@@ -2,15 +2,14 @@
 
 #include "Arduino.h"
 
-#include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
+#include <Udp.h>
 
 #define SEVENZYYEARS 2208988800UL
 #define NTP_PACKET_SIZE 48
 
 class NTPClient {
   private:
-    WiFiUDP       _udp;
+    UDP*          _udp;
 
     const char*   _poolServerName = "time.nist.gov"; // Default time server
     int           _port           = 1337;
@@ -23,14 +22,14 @@ class NTPClient {
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
-    void          sendNTPPacket(IPAddress _timeServerIP);
+    void          sendNTPPacket();
 
   public:
-    NTPClient();
-    NTPClient(int timeOffset);
-    NTPClient(const char* poolServerName);
-    NTPClient(const char* poolServerName, int timeOffset);
-    NTPClient(const char* poolServerName, int timeOffset, int updateInterval);
+    NTPClient(UDP& udp);
+    NTPClient(UDP& udp, int timeOffset);
+    NTPClient(UDP& udp, const char* poolServerName);
+    NTPClient(UDP& udp, const char* poolServerName, int timeOffset);
+    NTPClient(UDP& udp, const char* poolServerName, int timeOffset, int updateInterval);
 
     /**
      * This should be called in the main loop of your application. By default an update from the NTP Server is only
