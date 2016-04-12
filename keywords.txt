@@ -9,6 +9,7 @@ NTPClient         KEYWORD1
 #######################################
 
 begin             KEYWORD2
+end               KEYWORD2
 update            KEYWORD2
 forceUpdate       KEYWORD2
 getDay            KEYWORD2

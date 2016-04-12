@@ -56,4 +56,9 @@ class NTPClient {
      * @return time as raw seconds
      */
     unsigned long getRawTime();
+
+    /**
+     * Stops the underlying UDP client
+     */
+    void end();
 };
