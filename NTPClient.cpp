@@ -128,6 +128,10 @@ String NTPClient::getFormattedTime() {
   return hoursStr + ":" + minuteStr + ":" + secondStr;
 }
 
+void NTPClient::end() {
+  this->_udp->stop();
+}
+
 void NTPClient::sendNTPPacket() {
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
