@@ -13,11 +13,11 @@ class NTPClient {
 
     const char*   _poolServerName = "time.nist.gov"; // Default time server
     int           _port           = 1337;
-    int           _timeOffset;
+    int           _timeOffset     = 0;
 
     unsigned int  _updateInterval = 60000;  // In ms
 
-    unsigned long _currentEpoc;             // In s
+    unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
