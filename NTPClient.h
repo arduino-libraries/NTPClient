@@ -69,9 +69,9 @@ class NTPClient {
     String getFormattedTime();
 
     /**
-     * @return time as raw seconds
+     * @return time in seconds since Jan. 1, 1970
      */
-    unsigned long getRawTime();
+    unsigned long getEpochTime();
 
     /**
      * Stops the underlying UDP client
