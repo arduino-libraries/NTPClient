@@ -58,10 +58,10 @@ class NTPClient {
      */
     bool forceUpdate();
 
-    String getDay();
-    String getHours();
-    String getMinutes();
-    String getSeconds();
+    int getDay();
+    int getHours();
+    int getMinutes();
+    int getSeconds();
 
     /**
      * @return time formatted like `hh:mm:ss`

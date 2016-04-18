@@ -107,17 +107,17 @@ unsigned long NTPClient::getEpochTime() {
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
-String NTPClient::getDay() {
-  return String(((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
+int NTPClient::getDay() {
+  return (((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
 }
-String NTPClient::getHours() {
-  return String((this->getEpochTime()  % 86400L) / 3600);
+int NTPClient::getHours() {
+  return ((this->getEpochTime()  % 86400L) / 3600);
 }
-String NTPClient::getMinutes() {
-  return String((this->getEpochTime() % 3600) / 60);
+int NTPClient::getMinutes() {
+  return ((this->getEpochTime() % 3600) / 60);
 }
-String NTPClient::getSeconds() {
-  return String(this->getEpochTime() % 60);
+int NTPClient::getSeconds() {
+  return (this->getEpochTime() % 60);
 }
 
 String NTPClient::getFormattedTime() {
