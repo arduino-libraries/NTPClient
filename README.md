@@ -1,5 +1,7 @@
 # NTPClient 
 
+[![Build Status](https://travis-ci.org/arduino-libraries/NTPClient.svg?branch=master)](https://travis-ci.org/arduino-libraries/NTPClient)
+
 Connect to a NTP server, here is how:
 
 ```cpp
