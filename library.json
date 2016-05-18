@@ -2,11 +2,17 @@
   "name": "NTPClient",
   "keywords": "ntp, client, time",
   "description": "A NTPClient to connect to a time server",
-  "authors": 
-  {
-    "name": "Fabrice Weinberg",
-    "email": "fabrice@weinberg.me"
-  },
+  "authors":
+  [
+    {
+      "name": "Fabrice Weinberg",
+      "email": "fabrice@weinberg.me"
+    },
+    {
+      "name": "Sandeep Mistry",
+      "email": "sandeep.mistry@gmail.com"
+    }    
+  ],
   "repository":
   {
     "type": "git",
