@@ -16,7 +16,7 @@
   "repository":
   {
     "type": "git",
-    "url": "https://github.com/FWeinb/NTPClient.git"
+    "url": "https://github.com/arduino-libraries/NTPClient.git"
   },
   "version": "3.0.0",
   "frameworks": "arduino",
