@@ -64,6 +64,17 @@ class NTPClient {
     int getSeconds();
 
     /**
+     * Changes the time offset. Useful for changing timezones dynamically
+     */
+    void setTimeOffset(int timeOffset);
+
+    /**
+     * Set the update interval to another frequency. E.g. useful when the
+     * timeOffset should not be set in the constructor
+     */
+    void setUpdateInterval(int updateInterval);
+
+    /**
      * @return time formatted like `hh:mm:ss`
      */
     String getFormattedTime();

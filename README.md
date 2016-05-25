@@ -1,4 +1,4 @@
-# NTPClient 
+# NTPClient
 
 [![Build Status](https://travis-ci.org/arduino-libraries/NTPClient.svg?branch=master)](https://travis-ci.org/arduino-libraries/NTPClient)
 
@@ -17,7 +17,8 @@ const char *password = "<PASSWORD>";
 
 WiFiUDP ntpUDP;
 
-// By default 'time.nist.gov' is used.
+// By default 'time.nist.gov' is used with 60 seconds update interval and
+// no offset
 NTPClient timeClient(ntpUDP);
 
 // You can specify the time server pool and the offset, (in seconds)
@@ -38,9 +39,9 @@ void setup(){
 
 void loop() {
   timeClient.update();
-  
+
   Serial.println(timeClient.getFormattedTime());
-  
+
   delay(1000);
 }
 ```

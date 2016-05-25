@@ -140,6 +140,14 @@ void NTPClient::end() {
   this->_udpSetup = false;
 }
 
+void NTPClient::setTimeOffset(int timeOffset) {
+  this->_timeOffset     = timeOffset;
+}
+
+void NTPClient::setUpdateInterval(int updateInterval) {
+  this->_updateInterval = updateInterval;
+}
+
 void NTPClient::sendNTPPacket() {
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
@@ -161,4 +169,3 @@ void NTPClient::sendNTPPacket() {
   this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
   this->_udp->endPacket();
 }
-
