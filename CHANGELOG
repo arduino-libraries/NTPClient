@@ -1,3 +1,7 @@
+NTPClient 3.1.0 - 2016.05.31
+
+* Added functions for changing the timeOffset and updateInterval later. Thanks @SirUli
+
 NTPClient 3.0.0 - 2016.04.19
 
 * Constructors now require UDP instance argument, to add support for non-ESP8266 boards
