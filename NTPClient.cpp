@@ -60,6 +60,25 @@ void NTPClient::begin(int port) {
   this->_udpSetup = true;
 }
 
+bool NTPClient::checkResponse() {
+
+  if (this->_udp->parsePacket()) {
+    this->_lastUpdate = millis();
+    this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
+
+    unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
+    unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
+    // combine the four bytes (two words) into a long integer
+    // this is NTP time (seconds since Jan 1 1900):
+    unsigned long secsSince1900 = highWord << 16 | lowWord;
+
+    this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+    return true;
+  } else {
+    return false;
+  }
+}
+
 bool NTPClient::forceUpdate() {
   #ifdef DEBUG_NTPClient
     Serial.println("Update from NTP Server");
@@ -69,36 +88,38 @@ bool NTPClient::forceUpdate() {
 
   // Wait till data is there or timeout...
   byte timeout = 0;
-  int cb = 0;
+  bool cb = 0;
   do {
     delay ( 10 );
-    cb = this->_udp->parsePacket();
+    cb = this->checkResponse();
     if (timeout > 100) return false; // timeout after 1000 ms
     timeout++;
-  } while (cb == 0);
-
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
-  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
-
-  unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
-  unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
-  // combine the four bytes (two words) into a long integer
-  // this is NTP time (seconds since Jan 1 1900):
-  unsigned long secsSince1900 = highWord << 16 | lowWord;
-
-  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+  } while (cb == false);
 
   return true;
 }
 
 bool NTPClient::update() {
-  if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
-    || this->_lastUpdate == 0) {                                // Update if there was no update yet.
-    if (!this->_udpSetup) this->begin();                         // setup the UDP client if needed
-    return this->forceUpdate();
+  bool updated = false;
+  unsigned long now = millis();
+
+  if ((now - this->_lastUpdate >= this->_updateInterval)    // Update after _updateInterval
+      || this->_lastUpdate == 0
+      || now - _lastRequest > _retryInterval) {             // Update if there was no response to the request
+
+    // setup the UDP client if needed
+    if (!this->_udpSetup) {
+      this->begin();
+    }
+
+    this->sendNTPPacket();
   }
-  return true;
+
+  if (_lastRequest > _lastUpdate) {
+    updated = checkResponse();
+  }
+
+  return updated;
 }
 
 unsigned long NTPClient::getEpochTime() {
@@ -168,4 +189,7 @@ void NTPClient::sendNTPPacket() {
   this->_udp->beginPacket(this->_poolServerName, 123); //NTP requests are to port 123
   this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
   this->_udp->endPacket();
+
+  this->_lastRequest = millis();
+
 }

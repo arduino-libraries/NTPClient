@@ -18,13 +18,16 @@ class NTPClient {
     int           _timeOffset     = 0;
 
     unsigned int  _updateInterval = 60000;  // In ms
+    unsigned int  _retryInterval  = 1000;   // In ms
 
     unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
+    unsigned long _lastRequest    = 0;      // IN ms
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
     void          sendNTPPacket();
+    bool          checkResponse();
 
   public:
     NTPClient(UDP& udp);
@@ -53,7 +56,7 @@ class NTPClient {
 
     /**
      * This will force the update from the NTP Server.
-     *
+     * This can block for a full second
      * @return true on success, false on failure
      */
     bool forceUpdate();
