@@ -122,6 +122,10 @@ bool NTPClient::update() {
   return updated;
 }
 
+bool NTPClient::updated() {
+  return (_currentEpoc != 0);
+}
+
 unsigned long NTPClient::getEpochTime() {
   return this->_timeOffset + // User offset
          this->_currentEpoc + // Epoc returned by the NTP server

@@ -55,6 +55,12 @@ class NTPClient {
     bool update();
 
     /**
+     * Has the time ever been sucessfully updated
+     *
+     */
+    bool updated();
+
+    /**
      * This will force the update from the NTP Server.
      * This can block for a full second
      * @return true on success, false on failure
