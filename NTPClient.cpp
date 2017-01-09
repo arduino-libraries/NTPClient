@@ -73,6 +73,14 @@ bool NTPClient::checkResponse() {
     unsigned long secsSince1900 = highWord << 16 | lowWord;
 
     this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+
+    highWord = word(this->_packetBuffer[44], this->_packetBuffer[45]);
+    lowWord = word(this->_packetBuffer[46], this->_packetBuffer[47]);
+    this->_currentFraction = highWord << 16 | lowWord;
+
+    // if the user has set a callback function for when the time is updated, call it
+    if (_updateCallback) { _updateCallback(this); }
+
     return true;
   } else {
     return false;
@@ -129,7 +137,19 @@ bool NTPClient::updated() {
 unsigned long NTPClient::getEpochTime() {
   return this->_timeOffset + // User offset
          this->_currentEpoc + // Epoc returned by the NTP server
-         ((millis() - this->_lastUpdate) / 1000); // Time since last update
+         ((millis() - this->_lastUpdate + (_currentFraction / FRACTIONSPERMILLI)) / 1000); // Time since last update
+}
+
+unsigned long long NTPClient::getEpochMillis() {
+  unsigned long long epoch;
+
+  epoch = this->_timeOffset;                     // user offset
+  epoch += _currentEpoc;                         // last time returned via server
+  epoch *= 1000;                                 // convert to millis
+  epoch += _currentFraction / FRACTIONSPERMILLI; // add the fraction from the server
+  epoch += millis() - this->_lastUpdate;         // add the millis that have passed since the last update
+
+  return epoch;
 }
 
 int NTPClient::getDay() {
@@ -171,6 +191,10 @@ void NTPClient::setTimeOffset(int timeOffset) {
 
 void NTPClient::setUpdateInterval(int updateInterval) {
   this->_updateInterval = updateInterval;
+}
+
+void NTPClient::setUpdateCallback(NTPUpdateCallbackFunction f) {
+  _updateCallback = f;
 }
 
 void NTPClient::sendNTPPacket() {
