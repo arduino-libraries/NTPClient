@@ -64,6 +64,7 @@ bool NTPClient::checkResponse() {
 
   if (this->_udp->parsePacket()) {
     this->_lastUpdate = millis();
+    this->_lastRequest = 0; // no outstanding request
     this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
 
     unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
@@ -111,9 +112,9 @@ bool NTPClient::update() {
   bool updated = false;
   unsigned long now = millis();
 
-  if ((now - this->_lastUpdate >= this->_updateInterval)    // Update after _updateInterval
-      || this->_lastUpdate == 0
-      || now - _lastRequest > _retryInterval) {             // Update if there was no response to the request
+  if ( ((_lastRequest == 0) && (_lastUpdate == 0))                          // Never requested or updated
+    || ((_lastRequest == 0) && ((now - _lastUpdate) >= _updateInterval))    // Update after _updateInterval
+    || ((_lastRequest != 0) && ((now - _lastRequest) > _retryInterval)) ) { // Update if there was no response to the request
 
     // setup the UDP client if needed
     if (!this->_udpSetup) {
@@ -123,7 +124,7 @@ bool NTPClient::update() {
     this->sendNTPPacket();
   }
 
-  if (_lastRequest > _lastUpdate) {
+  if (_lastRequest) {
     updated = checkResponse();
   }
 
