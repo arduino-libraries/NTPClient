@@ -17,7 +17,7 @@ class NTPClient {
     int           _port           = NTP_DEFAULT_LOCAL_PORT;
     int           _timeOffset     = 0;
 
-    unsigned int  _updateInterval = 60000;  // In ms
+    unsigned long _updateInterval = 60000;  // In ms
 
     unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
@@ -31,7 +31,7 @@ class NTPClient {
     NTPClient(UDP& udp, int timeOffset);
     NTPClient(UDP& udp, const char* poolServerName);
     NTPClient(UDP& udp, const char* poolServerName, int timeOffset);
-    NTPClient(UDP& udp, const char* poolServerName, int timeOffset, int updateInterval);
+    NTPClient(UDP& udp, const char* poolServerName, int timeOffset, unsigned long updateInterval);
 
     /**
      * Starts the underlying UDP client with the default local port
@@ -72,7 +72,7 @@ class NTPClient {
      * Set the update interval to another frequency. E.g. useful when the
      * timeOffset should not be set in the constructor
      */
-    void setUpdateInterval(int updateInterval);
+    void setUpdateInterval(unsigned long updateInterval);
 
     /**
      * @return time formatted like `hh:mm:ss`
