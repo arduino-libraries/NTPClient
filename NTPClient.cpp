@@ -35,7 +35,13 @@ NTPClient::NTPClient(UDP& udp, const char* poolServerName) {
   this->_poolServerName = poolServerName;
 }
 
-NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset) {
+NTPClient::NTPClient(UDP& udp, IPAddress poolServerIP) {
+  this->_udp            = &udp;
+  this->_poolServerIP = poolServerIP;
+  this->_poolServerName = NULL;
+}
+
+NTPClient::NTPClient(UDP& udp, const char* poolServerName, int timeOffset) {
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
