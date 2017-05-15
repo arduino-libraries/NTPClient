@@ -73,6 +73,7 @@ class NTPClient {
      * timeOffset should not be set in the constructor
      */
     void setUpdateInterval(int updateInterval);
+    void setUpdateServer(const char* poolServerName);
 
     /**
      * @return time formatted like `hh:mm:ss`
