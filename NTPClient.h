@@ -7,6 +7,7 @@
 #define SEVENZYYEARS 2208988800UL
 #define NTP_PACKET_SIZE 48
 #define NTP_DEFAULT_LOCAL_PORT 1337
+//#define DEBUG_NTPClient
 
 class NTPClient {
   private:
@@ -17,10 +18,12 @@ class NTPClient {
     int           _port           = NTP_DEFAULT_LOCAL_PORT;
     int           _timeOffset     = 0;
 
-    unsigned int  _updateInterval = 60000;  // In ms
+    unsigned int _updateInterval = 60000;  // In ms
+    unsigned int _requestInterval = 1000; // In ms
 
     unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
+    unsigned long _lastRequest = 0; // In ms
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
@@ -73,6 +76,7 @@ class NTPClient {
      * timeOffset should not be set in the constructor
      */
     void setUpdateInterval(int updateInterval);
+    void setUpdateServer(const char* poolServerName);
 
     /**
      * @return time formatted like `hh:mm:ss`
