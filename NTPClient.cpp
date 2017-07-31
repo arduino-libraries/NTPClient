@@ -236,10 +236,10 @@ void NTPClient::sendNTPPacket() {
   this->_packetBuffer[2] = 6;     // Polling Interval
   this->_packetBuffer[3] = 0xEC;  // Peer Clock Precision
   // 8 bytes of zero for Root Delay & Root Dispersion
-  this->_packetBuffer[12]  = 49;
+  this->_packetBuffer[12]  = 0x49;
   this->_packetBuffer[13]  = 0x4E;
-  this->_packetBuffer[14]  = 49;
-  this->_packetBuffer[15]  = 52;
+  this->_packetBuffer[14]  = 0x49;
+  this->_packetBuffer[15]  = 0x52;
 
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
