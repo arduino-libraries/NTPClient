@@ -150,8 +150,8 @@ int NTPClient::getSeconds() {
   return (this->getEpochTime() % 60);
 }
 
-String NTPClient::getFormattedTime() {
-  unsigned long rawTime = this->getEpochTime();
+String NTPClient::getFormattedTime(unsigned long secs) {
+  unsigned long rawTime = secs ? secs : this->getEpochTime();
   unsigned long hours = (rawTime % 86400L) / 3600;
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
 
@@ -198,4 +198,8 @@ void NTPClient::sendNTPPacket() {
   this->_udp->beginPacket(this->_poolServerName, 123); //NTP requests are to port 123
   this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
   this->_udp->endPacket();
+}
+
+void NTPClient::setEpochTime(unsigned long secs) {
+  this->_currentEpoc = secs;
 }

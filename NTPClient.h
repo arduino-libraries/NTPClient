@@ -76,9 +76,9 @@ class NTPClient {
     void setUpdateInterval(unsigned long updateInterval);
 
     /**
-     * @return time formatted like `hh:mm:ss`
-     */
-    String getFormattedTime();
+    * @return secs argument (or 0 for current time) formatted like `hh:mm:ss`
+    */
+    String getFormattedTime(unsigned long secs = 0);
 
     /**
      * @return time in seconds since Jan. 1, 1970
@@ -89,4 +89,9 @@ class NTPClient {
      * Stops the underlying UDP client
      */
     void end();
+
+    /**
+    * Replace the NTP-fetched time with seconds since Jan. 1, 1970
+    */
+    void setEpochTime(unsigned long secs);
 };
