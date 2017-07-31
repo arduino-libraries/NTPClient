@@ -35,16 +35,37 @@ NTPClient::NTPClient(UDP& udp, const char* poolServerName) {
   this->_poolServerName = poolServerName;
 }
 
+NTPClient::NTPClient(UDP& udp, IPAddress poolServerIP) {
+  this->_udp            = &udp;
+  this->_poolServerIP = poolServerIP;
+  this->_poolServerName = NULL;
+}
+
 NTPClient::NTPClient(UDP& udp, const char* poolServerName, int timeOffset) {
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
 }
 
+NTPClient::NTPClient(UDP& udp, IPAddress poolServerIP,int timeOffset){
+  this->_udp            = &udp;
+  this->_timeOffset     = timeOffset;
+  this->_poolServerIP = poolServerIP;
+  this->_poolServerName = NULL;
+}
+
 NTPClient::NTPClient(UDP& udp, const char* poolServerName, int timeOffset, unsigned long updateInterval) {
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
+  this->_updateInterval = updateInterval;
+}
+
+NTPClient::NTPClient(UDP& udp, IPAddress poolServerIP, int timeOffset, unsigned long updateInterval) {
+  this->_udp            = &udp;
+  this->_timeOffset     = timeOffset; 
+  this->_poolServerIP = poolServerIP;
+  this->_poolServerName = NULL;
   this->_updateInterval = updateInterval;
 }
 
