@@ -148,6 +148,10 @@ void NTPClient::setUpdateInterval(int updateInterval) {
   this->_updateInterval = updateInterval;
 }
 
+void NTPClient::setPoolServerName(const char* poolServerName) {
+    this->_poolServerName = poolServerName;
+}
+
 void NTPClient::sendNTPPacket() {
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
