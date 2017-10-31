@@ -102,26 +102,35 @@ bool NTPClient::update() {
 }
 
 unsigned long NTPClient::getEpochTime() {
-  return this->_timeOffset + // User offset
-         this->_currentEpoc + // Epoc returned by the NTP server
+  return this->_currentEpoc + // Epoc returned by the NTP server
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
 int NTPClient::getDay() {
-  return (((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
+  unsigned long time = this->getEpochTime();
+  time += this->_timeOffset; // User offset
+  return (((time / 86400L) + 4 ) % 7); //0 is Sunday
 }
 int NTPClient::getHours() {
-  return ((this->getEpochTime()  % 86400L) / 3600);
+  unsigned long time = this->getEpochTime();
+  time += this->_timeOffset; // User offset
+  return ((time  % 86400L) / 3600);
 }
 int NTPClient::getMinutes() {
-  return ((this->getEpochTime() % 3600) / 60);
+  unsigned long time = this->getEpochTime();
+  time += this->_timeOffset; // User offset
+  return ((time % 3600) / 60);
 }
 int NTPClient::getSeconds() {
-  return (this->getEpochTime() % 60);
+  unsigned long time = this->getEpochTime();
+  time += this->_timeOffset; // User offset
+  return (time % 60);
 }
 
 String NTPClient::getFormattedTime() {
   unsigned long rawTime = this->getEpochTime();
+  rawTime += this->_timeOffset; // User offset
+
   unsigned long hours = (rawTime % 86400L) / 3600;
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
 
