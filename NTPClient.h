@@ -32,7 +32,7 @@ class NTPClient {
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
-    NTPUpdateCallbackFunction _updateCallback;
+    NTPUpdateCallbackFunction _updateCallback = NULL;
 
     void          sendNTPPacket();
     bool          checkResponse();
