@@ -134,6 +134,45 @@ String NTPClient::getFormattedTime() {
   return hoursStr + ":" + minuteStr + ":" + secondStr;
 }
 
+int NTPClient::getYear() {
+  time_t rawtime = this->getEpochTime();
+  struct tm * ti;
+  ti = localtime (&rawtime);
+  int year = ti->tm_year + 1900;
+  
+  return year;
+}
+
+int NTPClient::getMonth() {
+  time_t rawtime = this->getEpochTime();
+  struct tm * ti;
+  ti = localtime (&rawtime);
+  int month = (ti->tm_mon + 1) < 10 ? 0 + (ti->tm_mon + 1) : (ti->tm_mon + 1);
+  
+  return month;
+}
+
+int NTPClient::getDate() {
+  time_t rawtime = this->getEpochTime();
+  struct tm * ti;
+  ti = localtime (&rawtime);
+  int month = (ti->tm_mday) < 10 ? 0 + (ti->tm_mday) : (ti->tm_mday);
+  
+  return month;
+}
+
+String NTPClient::getFormattedDate() {
+	int day = this->getDate();
+	int month = this->getMonth();
+	int year = this->getYear();
+	
+	String dayStr = day < 10 ? "0" + String(day) : String(day);
+	String monthStr = month < 10 ? "0" + String(month) : String(month);
+	String yearStr = String(year);
+	
+	return dayStr + "." + monthStr + "." + yearStr;
+}
+
 void NTPClient::end() {
   this->_udp->stop();
 
