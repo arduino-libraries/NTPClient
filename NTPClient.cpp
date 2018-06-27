@@ -60,6 +60,30 @@ void NTPClient::begin(int port) {
   this->_udpSetup = true;
 }
 
+bool NTPClient::isValid(byte * ntpPacket)
+{
+	//Perform a few validity checks on the packet
+	if((ntpPacket[0] & 0b11000000) == 0b11000000)		//Check for LI=UNSYNC
+		return false;
+		
+	if((ntpPacket[0] & 0b00111000) >> 3 < 0b100)		//Check for Version >= 4
+		return false;
+		
+	if((ntpPacket[0] & 0b00000111) != 0b100)			//Check for Mode == Server
+		return false;
+		
+	if((ntpPacket[1] < 1) || (ntpPacket[1] > 15))		//Check for valid Stratum
+		return false;
+
+	if(	ntpPacket[16] == 0 && ntpPacket[17] == 0 && 
+		ntpPacket[18] == 0 && ntpPacket[19] == 0 &&
+		ntpPacket[20] == 0 && ntpPacket[21] == 0 &&
+		ntpPacket[22] == 0 && ntpPacket[22] == 0)		//Check for ReferenceTimestamp != 0
+		return false;
+
+	return true;
+}
+
 bool NTPClient::forceUpdate() {
   #ifdef DEBUG_NTPClient
     Serial.println("Update from NTP Server");
@@ -73,13 +97,19 @@ bool NTPClient::forceUpdate() {
   do {
     delay ( 10 );
     cb = this->_udp->parsePacket();
+    
+    if(cb > 0)
+    {
+      this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
+      if(!this->isValid(this->_packetBuffer))
+        cb = 0;
+    }
+    
     if (timeout > 100) return false; // timeout after 1000 ms
     timeout++;
   } while (cb == 0);
 
   this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
-  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
 
   unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
   unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
@@ -120,8 +150,8 @@ int NTPClient::getSeconds() {
   return (this->getEpochTime() % 60);
 }
 
-String NTPClient::getFormattedTime() {
-  unsigned long rawTime = this->getEpochTime();
+String NTPClient::getFormattedTime(unsigned long secs) {
+  unsigned long rawTime = secs ? secs : this->getEpochTime();
   unsigned long hours = (rawTime % 86400L) / 3600;
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
 
@@ -132,6 +162,33 @@ String NTPClient::getFormattedTime() {
   String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
 
   return hoursStr + ":" + minuteStr + ":" + secondStr;
+}
+
+// Based on https://github.com/PaulStoffregen/Time/blob/master/Time.cpp
+// currently assumes UTC timezone, instead of using this->_timeOffset
+String NTPClient::getFormattedDate(unsigned long secs) {
+  unsigned long rawTime = (secs ? secs : this->getEpochTime()) / 86400L;  // in days
+  unsigned long days = 0, year = 1970;
+  uint8_t month;
+  static const uint8_t monthDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
+
+  while((days += (LEAP_YEAR(year) ? 366 : 365)) <= rawTime)
+    year++;
+  rawTime -= days - (LEAP_YEAR(year) ? 366 : 365); // now it is days in this year, starting at 0
+  days=0;
+  for (month=0; month<12; month++) {
+    uint8_t monthLength;
+    if (month==1) { // february
+      monthLength = LEAP_YEAR(year) ? 29 : 28;
+    } else {
+      monthLength = monthDays[month];
+    }
+    if (rawTime < monthLength) break;
+    rawTime -= monthLength;
+  }
+  String monthStr = ++month < 10 ? "0" + String(month) : String(month); // jan is month 1  
+  String dayStr = ++rawTime < 10 ? "0" + String(rawTime) : String(rawTime); // day of month  
+  return String(year) + "-" + monthStr + "-" + dayStr + "T" + this->getFormattedTime(secs ? secs : 0) + "Z";
 }
 
 void NTPClient::end() {
@@ -158,14 +215,18 @@ void NTPClient::sendNTPPacket() {
   this->_packetBuffer[2] = 6;     // Polling Interval
   this->_packetBuffer[3] = 0xEC;  // Peer Clock Precision
   // 8 bytes of zero for Root Delay & Root Dispersion
-  this->_packetBuffer[12]  = 49;
+  this->_packetBuffer[12]  = 0x49;
   this->_packetBuffer[13]  = 0x4E;
-  this->_packetBuffer[14]  = 49;
-  this->_packetBuffer[15]  = 52;
+  this->_packetBuffer[14]  = 0x49;
+  this->_packetBuffer[15]  = 0x52;
 
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
   this->_udp->beginPacket(this->_poolServerName, 123); //NTP requests are to port 123
   this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
   this->_udp->endPacket();
+}
+
+void NTPClient::setEpochTime(unsigned long secs) {
+  this->_currentEpoc = secs;
 }

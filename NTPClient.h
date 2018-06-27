@@ -7,6 +7,8 @@
 #define SEVENZYYEARS 2208988800UL
 #define NTP_PACKET_SIZE 48
 #define NTP_DEFAULT_LOCAL_PORT 1337
+#define LEAP_YEAR(Y)     ( (Y>0) && !(Y%4) && ( (Y%100) || !(Y%400) ) )
+
 
 class NTPClient {
   private:
@@ -25,6 +27,7 @@ class NTPClient {
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
     void          sendNTPPacket();
+    bool          isValid(byte * ntpPacket);
 
   public:
     NTPClient(UDP& udp);
@@ -75,17 +78,28 @@ class NTPClient {
     void setUpdateInterval(unsigned long updateInterval);
 
     /**
-     * @return time formatted like `hh:mm:ss`
-     */
-    String getFormattedTime();
+    * @return secs argument (or 0 for current time) formatted like `hh:mm:ss`
+    */
+    String getFormattedTime(unsigned long secs = 0);
 
     /**
      * @return time in seconds since Jan. 1, 1970
      */
     unsigned long getEpochTime();
+  
+    /**
+    * @return secs argument (or 0 for current date) formatted to ISO 8601
+    * like `2004-02-12T15:19:21+00:00`
+    */
+    String getFormattedDate(unsigned long secs = 0);
 
     /**
      * Stops the underlying UDP client
      */
     void end();
+
+    /**
+    * Replace the NTP-fetched time with seconds since Jan. 1, 1970
+    */
+    void setEpochTime(unsigned long secs);
 };
