@@ -194,6 +194,10 @@ void NTPClient::setUpdateInterval(int updateInterval) {
   this->_updateInterval = updateInterval;
 }
 
+void NTPClient::setRetryInterval(int retryInterval) {
+  _retryInterval = retryInterval;
+}
+
 void NTPClient::setUpdateCallback(NTPUpdateCallbackFunction f) {
   _updateCallback = f;
 }

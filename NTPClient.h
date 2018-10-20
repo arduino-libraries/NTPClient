@@ -98,6 +98,11 @@ class NTPClient {
     void setUpdateInterval(int updateInterval);
 
     /**
+     * Set the retry interval to another frequency in ms
+     */
+    void setRetryInterval(int retryInterval);
+
+    /**
      * @return time formatted like `hh:mm:ss`
      */
     String getFormattedTime();
