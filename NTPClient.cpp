@@ -21,27 +21,42 @@
 
 #include "NTPClient.h"
 
-NTPClient::NTPClient(UDP& udp) {
+NTPClient::NTPClient(UDP& udp) 
+  :_updateStartHandler(NULL),
+   _updateEndHandler(NULL)
+{
   this->_udp            = &udp;
 }
 
-NTPClient::NTPClient(UDP& udp, long timeOffset) {
+NTPClient::NTPClient(UDP& udp, long timeOffset) 
+  :_updateStartHandler(NULL),
+   _updateEndHandler(NULL)
+{
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
 }
 
-NTPClient::NTPClient(UDP& udp, const char* poolServerName) {
+NTPClient::NTPClient(UDP& udp, const char* poolServerName) 
+  :_updateStartHandler(NULL),
+   _updateEndHandler(NULL)
+{
   this->_udp            = &udp;
   this->_poolServerName = poolServerName;
 }
 
-NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset) {
+NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset) 
+  :_updateStartHandler(NULL),
+   _updateEndHandler(NULL)
+{
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
 }
 
-NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval) {
+NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval) 
+  :_updateStartHandler(NULL),
+   _updateEndHandler(NULL)
+{
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
@@ -65,6 +80,10 @@ bool NTPClient::forceUpdate() {
     Serial.println("Update from NTP Server");
   #endif
 
+  if (this->_updateStartHandler) {
+    this->_updateStartHandler();
+  }
+  
   this->sendNTPPacket();
 
   // Wait till data is there or timeout...
@@ -88,6 +107,10 @@ bool NTPClient::forceUpdate() {
   unsigned long secsSince1900 = highWord << 16 | lowWord;
 
   this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+
+  if (this->_updateEndHandler) {
+    this->_updateEndHandler();
+  }
 
   return true;
 }
