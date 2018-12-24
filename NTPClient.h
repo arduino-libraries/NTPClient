@@ -13,11 +13,11 @@ class NTPClient {
     UDP*          _udp;
     bool          _udpSetup       = false;
 
-    const char*   _poolServerName = "time.nist.gov"; // Default time server
+    const char*   _poolServerName = "pool.ntp.org"; // Default time server
     int           _port           = NTP_DEFAULT_LOCAL_PORT;
-    int           _timeOffset     = 0;
+    long          _timeOffset     = 0;
 
-    unsigned int  _updateInterval = 60000;  // In ms
+    unsigned long _updateInterval = 60000;  // In ms
 
     unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
@@ -28,10 +28,17 @@ class NTPClient {
 
   public:
     NTPClient(UDP& udp);
-    NTPClient(UDP& udp, int timeOffset);
+    NTPClient(UDP& udp, long timeOffset);
     NTPClient(UDP& udp, const char* poolServerName);
-    NTPClient(UDP& udp, const char* poolServerName, int timeOffset);
-    NTPClient(UDP& udp, const char* poolServerName, int timeOffset, int updateInterval);
+    NTPClient(UDP& udp, const char* poolServerName, long timeOffset);
+    NTPClient(UDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval);
+
+    /**
+     * Set time server name
+     *
+     * @param poolServerName
+     */
+    void setPoolServerName(const char* poolServerName);
 
     /**
      * Starts the underlying UDP client with the default local port
@@ -62,9 +69,9 @@ class NTPClient {
     int getHours();
     int getMinutes();
     int getSeconds();
-	int getYear();
-	int getMonth();
-	int getDate();
+	  int getYear();
+	  int getMonth();
+	  int getDate();
 
     /**
      * Changes the time offset. Useful for changing timezones dynamically
@@ -75,22 +82,22 @@ class NTPClient {
      * Set the update interval to another frequency. E.g. useful when the
      * timeOffset should not be set in the constructor
      */
-    void setUpdateInterval(int updateInterval);
+    void setUpdateInterval(unsigned long updateInterval);
 
     /**
      * @return time formatted like `hh:mm:ss`
      */
     String getFormattedTime();
 	
-	/**
+	  /**
      * @return date formatted like `dd.MM.yyyy`
      */
-	String getFormattedDate();
+	  String getFormattedDate();
 
     /**
      * @return time in seconds since Jan. 1, 1970
      */
-    unsigned long getEpochTime();
+    unsigned long getEpochTime() const;
 
     /**
      * Stops the underlying UDP client

@@ -17,7 +17,7 @@ const char *password = "<PASSWORD>";
 
 WiFiUDP ntpUDP;
 
-// By default 'time.nist.gov' is used with 60 seconds update interval and
+// By default 'pool.ntp.org' is used with 60 seconds update interval and
 // no offset
 NTPClient timeClient(ntpUDP);
 
