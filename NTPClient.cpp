@@ -101,6 +101,10 @@ bool NTPClient::update() {
   return true;
 }
 
+bool NTPClient::isTimeSet() const {
+  return (this->_lastUpdate != 0); // returns true if the time has been set, else false
+}
+
 unsigned long NTPClient::getEpochTime() const {
   return this->_timeOffset + // User offset
          this->_currentEpoc + // Epoc returned by the NTP server
