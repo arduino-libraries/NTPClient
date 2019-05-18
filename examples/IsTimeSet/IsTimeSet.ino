@@ -10,7 +10,7 @@ const char *password = "<PASSWORD>";
 
 WiFiUDP ntpUDP;
 // initialized to a time offset of 10 hours
-NTPClient timeClient(ntpUDP,"pool.ntp.org", 36000,);
+NTPClient timeClient(ntpUDP,"pool.ntp.org", 36000, 60000);
 //                           HH:MM:SS
 // timeClient initializes to 10:00:00 if it does not receive an NTP packet
 // before the 100ms timeout.
