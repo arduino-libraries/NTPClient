@@ -17,7 +17,7 @@ NTPClient timeClient(ntpUDP,"pool.ntp.org", 36000, 60000);
 // without isTimeSet() the LED would be switched on, although the time
 // was not yet set correctly.
 
-// blue led on ESP12F
+// blue LED on ESP-12F
 const int led = 2;
 const int hour = 10;
 const int minute = 0;
