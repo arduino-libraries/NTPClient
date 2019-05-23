@@ -14,7 +14,7 @@ NTPClient timeClient(ntpUDP,"pool.ntp.org", 36000, 60000);
 //                           HH:MM:SS
 // timeClient initializes to 10:00:00 if it does not receive an NTP packet
 // before the 100ms timeout.
-// Without isTimeSet() the LED would be switched on, although the time
+// without isTimeSet() the LED would be switched on, although the time
 // was not yet set correctly.
 
 // blue led on ESP12F
