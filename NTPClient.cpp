@@ -25,7 +25,7 @@ NTPClient::NTPClient(UDP& udp) {
   this->_udp            = &udp;
 }
 
-NTPClient::NTPClient(UDP& udp, int timeOffset) {
+NTPClient::NTPClient(UDP& udp, long timeOffset) {
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
 }
@@ -35,13 +35,13 @@ NTPClient::NTPClient(UDP& udp, const char* poolServerName) {
   this->_poolServerName = poolServerName;
 }
 
-NTPClient::NTPClient(UDP& udp, const char* poolServerName, int timeOffset) {
+NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset) {
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
 }
 
-NTPClient::NTPClient(UDP& udp, const char* poolServerName, int timeOffset, int updateInterval) {
+NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval) {
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
@@ -135,7 +135,7 @@ bool NTPClient::updated() {
   return (_currentEpoc != 0);
 }
 
-unsigned long NTPClient::getEpochTime() {
+unsigned long NTPClient::getEpochTime() const {
   return this->_timeOffset + // User offset
          this->_currentEpoc + // Epoc returned by the NTP server
          ((millis() - this->_lastUpdate + (_currentFraction / FRACTIONSPERMILLI)) / 1000); // Time since last update
@@ -153,20 +153,20 @@ unsigned long long NTPClient::getEpochMillis() {
   return epoch;
 }
 
-int NTPClient::getDay() {
+int NTPClient::getDay() const {
   return (((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
 }
-int NTPClient::getHours() {
+int NTPClient::getHours() const {
   return ((this->getEpochTime()  % 86400L) / 3600);
 }
-int NTPClient::getMinutes() {
+int NTPClient::getMinutes() const {
   return ((this->getEpochTime() % 3600) / 60);
 }
-int NTPClient::getSeconds() {
+int NTPClient::getSeconds() const {
   return (this->getEpochTime() % 60);
 }
 
-String NTPClient::getFormattedTime() {
+String NTPClient::getFormattedTime() const {
   unsigned long rawTime = this->getEpochTime();
   unsigned long hours = (rawTime % 86400L) / 3600;
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
@@ -190,7 +190,7 @@ void NTPClient::setTimeOffset(int timeOffset) {
   this->_timeOffset     = timeOffset;
 }
 
-void NTPClient::setUpdateInterval(int updateInterval) {
+void NTPClient::setUpdateInterval(unsigned long updateInterval) {
   this->_updateInterval = updateInterval;
 }
 
@@ -200,6 +200,10 @@ void NTPClient::setRetryInterval(int retryInterval) {
 
 void NTPClient::setUpdateCallback(NTPUpdateCallbackFunction f) {
   _updateCallback = f;
+}
+
+void NTPClient::setPoolServerName(const char* poolServerName) {
+    this->_poolServerName = poolServerName;
 }
 
 void NTPClient::sendNTPPacket() {
