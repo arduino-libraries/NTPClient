@@ -30,6 +30,7 @@ class NTPClient {
     NTPClient(UDP& udp);
     NTPClient(UDP& udp, long timeOffset);
     NTPClient(UDP& udp, const char* poolServerName);
+    NTPClient(UDP& udp, IPAddress poolServerIP);
     NTPClient(UDP& udp, const char* poolServerName, long timeOffset);
     NTPClient(UDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval);
 
