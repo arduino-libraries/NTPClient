@@ -81,6 +81,34 @@ void NTPClient::begin(int port) {
   this->_udpSetup = true;
 }
 
+bool NTPClient::checkResponse() {
+
+  if (this->_udp->parsePacket()) {
+    this->_lastUpdate = millis();
+    this->_lastRequest = 0; // no outstanding request
+    this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
+
+    unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
+    unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
+    // combine the four bytes (two words) into a long integer
+    // this is NTP time (seconds since Jan 1 1900):
+    unsigned long secsSince1900 = highWord << 16 | lowWord;
+
+    this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+
+    highWord = word(this->_packetBuffer[44], this->_packetBuffer[45]);
+    lowWord = word(this->_packetBuffer[46], this->_packetBuffer[47]);
+    this->_currentFraction = highWord << 16 | lowWord;
+
+    // if the user has set a callback function for when the time is updated, call it
+    if (_updateCallback) { _updateCallback(this); }
+
+    return true;
+  } else {
+    return false;
+  }
+}
+
 bool NTPClient::forceUpdate() {
   #ifdef DEBUG_NTPClient
     Serial.println("Update from NTP Server");
@@ -94,42 +122,60 @@ bool NTPClient::forceUpdate() {
 
   // Wait till data is there or timeout...
   byte timeout = 0;
-  int cb = 0;
+  bool cb = 0;
   do {
     delay ( 10 );
-    cb = this->_udp->parsePacket();
+    cb = this->checkResponse();
     if (timeout > 100) return false; // timeout after 1000 ms
     timeout++;
-  } while (cb == 0);
+  } while (cb == false);
 
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
-  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
-
-  unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
-  unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
-  // combine the four bytes (two words) into a long integer
-  // this is NTP time (seconds since Jan 1 1900):
-  unsigned long secsSince1900 = highWord << 16 | lowWord;
-
-  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
-
-  return true;  // return true after successful update
+  return true;
 }
 
 bool NTPClient::update() {
-  if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
-    || this->_lastUpdate == 0) {                                // Update if there was no update yet.
-    if (!this->_udpSetup) this->begin();                         // setup the UDP client if needed
-    return this->forceUpdate();
+  bool updated = false;
+  unsigned long now = millis();
+
+  if ( ((_lastRequest == 0) && (_lastUpdate == 0))                          // Never requested or updated
+    || ((_lastRequest == 0) && ((now - _lastUpdate) >= _updateInterval))    // Update after _updateInterval
+    || ((_lastRequest != 0) && ((now - _lastRequest) > _retryInterval)) ) { // Update if there was no response to the request
+
+    // setup the UDP client if needed
+    if (!this->_udpSetup) {
+      this->begin();
+    }
+
+    this->sendNTPPacket();
   }
-  return false;   // return false if update does not occur
+
+  if (_lastRequest) {
+    updated = checkResponse();
+  }
+
+  return updated;
+}
+
+bool NTPClient::updated() {
+  return (_currentEpoc != 0);
 }
 
 unsigned long NTPClient::getEpochTime() const {
   return this->_timeOffset + // User offset
          this->_currentEpoc + // Epoc returned by the NTP server
-         ((millis() - this->_lastUpdate) / 1000); // Time since last update
+         ((millis() - this->_lastUpdate + (_currentFraction / FRACTIONSPERMILLI)) / 1000); // Time since last update
+}
+
+unsigned long long NTPClient::getEpochMillis() {
+  unsigned long long epoch;
+
+  epoch = this->_timeOffset;                     // user offset
+  epoch += _currentEpoc;                         // last time returned via server
+  epoch *= 1000;                                 // convert to millis
+  epoch += _currentFraction / FRACTIONSPERMILLI; // add the fraction from the server
+  epoch += millis() - this->_lastUpdate;         // add the millis that have passed since the last update
+
+  return epoch;
 }
 
 int NTPClient::getDay() const {
@@ -173,6 +219,14 @@ void NTPClient::setUpdateInterval(unsigned long updateInterval) {
   this->_updateInterval = updateInterval;
 }
 
+void NTPClient::setRetryInterval(int retryInterval) {
+  _retryInterval = retryInterval;
+}
+
+void NTPClient::setUpdateCallback(NTPUpdateCallbackFunction f) {
+  _updateCallback = f;
+}
+
 void NTPClient::setPoolServerName(const char* poolServerName) {
     this->_poolServerName = poolServerName;
 }
@@ -201,4 +255,7 @@ void NTPClient::sendNTPPacket() {
   }
   this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
   this->_udp->endPacket();
+
+  this->_lastRequest = millis();
+
 }
