@@ -89,7 +89,7 @@ bool NTPClient::forceUpdate() {
 
   this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
 
-  return true;
+  return true;  // return true after successful update
 }
 
 bool NTPClient::update() {
@@ -98,7 +98,7 @@ bool NTPClient::update() {
     if (!this->_udpSetup) this->begin();                         // setup the UDP client if needed
     return this->forceUpdate();
   }
-  return true;
+  return false;   // return false if update does not occur
 }
 
 unsigned long NTPClient::getEpochTime() const {
