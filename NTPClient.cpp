@@ -1,6 +1,7 @@
 /**
  * The MIT License (MIT)
- * Copyright (c) 2015 by Fabrice Weinberg
+ * Original work Copyright (c) 2015 by Fabrice Weinberg
+ * Modified work Copyright (c) 2020 by Thomas Haggett
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -82,48 +83,72 @@ void NTPClient::begin(int port) {
 }
 
 bool NTPClient::forceUpdate() {
-  #ifdef DEBUG_NTPClient
-    Serial.println("Update from NTP Server");
-  #endif
-
-  // flush any existing packets
-  while(this->_udp->parsePacket() != 0)
-    this->_udp->flush();
-
-  this->sendNTPPacket();
-
-  // Wait till data is there or timeout...
-  byte timeout = 0;
-  int cb = 0;
-  do {
-    delay ( 10 );
-    cb = this->_udp->parsePacket();
-    if (timeout > 100) return false; // timeout after 1000 ms
-    timeout++;
-  } while (cb == 0);
-
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
-  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
-
-  unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
-  unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
-  // combine the four bytes (two words) into a long integer
-  // this is NTP time (seconds since Jan 1 1900):
-  unsigned long secsSince1900 = highWord << 16 | lowWord;
-
-  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
-
-  return true;  // return true after successful update
+  this->_lastUpdate = 0;
+  this->_requestSent = 0;
+  this->_requestDelay = 1;
+  return true;
 }
 
 bool NTPClient::update() {
-  if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
-    || this->_lastUpdate == 0) {                                // Update if there was no update yet.
-    if (!this->_udpSetup) this->begin();                         // setup the UDP client if needed
-    return this->forceUpdate();
+  int now = millis();
+
+  if(!this->_udpSetup)
+    this->begin();
+
+  // are we due to send a request?
+  if(this->_lastUpdate > 0 && now < this->_lastUpdate + this->_updateInterval) {
+    // update isn't due. carry on.
+    return false;
   }
-  return false;   // return false if update does not occur
+
+  // we're due an update - have we sent a request and it has timed out,
+  // or not actually sent a request yet?
+  if(this->_requestSent == 0 || now > this->_requestSent + this->_requestDelay + REQUEST_TIMEOUT) {
+    // if we had already sent a request, let's bump up the _requestDelay so we don't constantly
+    // hammer a potentially down NTP server!
+    if(this->_requestSent > 0) {
+        this->_requestDelay *= 2;
+      if(this->_requestDelay > 30000)
+        this->_requestDelay = 30000;
+    } else {
+      // this is the first time we're attempting a send.
+      // purge any old packets that might be buffered
+      while(this->_udp->parsePacket() != 0) {
+        this->_udp->flush();
+      }
+    }
+
+    // Right. Send an NTP packet!
+    // Serial.printf("Sending an NTP packet (timeout=%i)!\n", this->_requestDelay + REQUEST_TIMEOUT);
+    this->sendNTPPacket();
+
+    // remember when we last sent a request
+    this->_requestSent = now;
+  }
+
+  // check for any replies!
+  int length = this->_udp->parsePacket();
+  if( length > 0 ) {
+    Serial.println("Got an NTP reply!");
+    this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
+    this->_udp->flush();
+
+    unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
+    unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
+    // combine the four bytes (two words) into a long integer
+    // this is NTP time (seconds since Jan 1 1900):
+    unsigned long secsSince1900 = highWord << 16 | lowWord;
+
+    this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+
+    // cleanup and reset our state
+    this->_requestSent = 0;
+    this->_requestDelay = 1;
+    this->_lastUpdate = now;
+    return true;
+  }
+
+  return false;
 }
 
 unsigned long NTPClient::getEpochTime() const {
