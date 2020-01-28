@@ -89,6 +89,8 @@ bool NTPClient::forceUpdate() {
   return true;
 }
 
+#define REQUEST_TIMEOUT 1000UL
+
 bool NTPClient::update() {
   int now = millis();
 
