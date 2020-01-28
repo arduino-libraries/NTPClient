@@ -23,6 +23,9 @@ class NTPClient {
     unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
 
+    unsigned long _requestSent    = 0;      // in ms (when the last request was sent)
+    unsigned long _requestDelay   = 1;      // in ms (a cumulative delay to slow down constant failures)
+
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
     void          sendNTPPacket();
