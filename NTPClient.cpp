@@ -145,6 +145,23 @@ int NTPClient::getSeconds() const {
   return (this->getEpochTime() % 60);
 }
 
+DateTime NTPClient::getDateTime() const {
+  struct tm * ts;
+  time_t rawTime = this->getEpochTime();
+  ts = localtime(&rawTime);
+  DateTime dt = {ts->tm_sec, ts->tm_min, ts->tm_hour, ts->tm_mday, (ts->tm_mon + 1), (ts->tm_year + 1900)};
+  return dt;
+}
+
+String NTPClient::formatDateTime(const char* fmt) const {
+  struct tm * ts;
+  time_t rawTime = this->getEpochTime();
+  ts = localtime(&rawTime);
+  char buf[64];
+  strftime(buf, sizeof(buf), fmt, ts);
+  return String(buf);
+}
+
 String NTPClient::getFormattedTime() const {
   unsigned long rawTime = this->getEpochTime();
   unsigned long hours = (rawTime % 86400L) / 3600;
