@@ -153,12 +153,12 @@ DateTime NTPClient::getDateTime() const {
   return dt;
 }
 
-String NTPClient::formatDateTime(const char* fmt) const {
+String NTPClient::getFormattedDateTime(const char* dateTimeFormat) const {
   struct tm * ts;
   time_t rawTime = this->getEpochTime();
   ts = localtime(&rawTime);
   char buf[64];
-  strftime(buf, sizeof(buf), fmt, ts);
+  strftime(buf, sizeof(buf), dateTimeFormat, ts);
   return String(buf);
 }
 

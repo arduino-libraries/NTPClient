@@ -85,15 +85,15 @@ class NTPClient {
     int getSeconds() const;
 
     /**
-     * Get date time as a astuct which contains
+     * Get date time as a struct which contains
      * Year, Month, Date, Hours, Minutes, Seconds
      */
     DateTime getDateTime() const;
 
     /**
-     * Format the date time to a string with a given format (Ex: %Y/%m/%d %H:%M:%S)
+     * Return the date time as a String with the given format (Ex: %Y/%m/%d %H:%M:%S)
      */
-    String formatDateTime(const char* fmt) const;
+    String getFormattedDateTime(const char* dateTimeFormat) const;
     
     /**
      * Changes the time offset. Useful for changing timezones dynamically
