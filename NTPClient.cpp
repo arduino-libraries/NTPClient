@@ -99,7 +99,7 @@ bool NTPClient::forceUpdate(uint16_t timeout) {
   do {
     delay ( 10 );
     cb = this->_udp->parsePacket();
-    if (millis() - current > timeout) return false; // timeout after 1000 ms
+    if (cb == 0 && millis() - current > timeout) return false;
   } while (cb == 0);
 
   this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
