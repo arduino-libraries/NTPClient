@@ -25,7 +25,7 @@ class NTPClient {
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
-    void          sendNTPPacket(uint16_t dnsTimeout = 2000, uint8_t dnsRetries = 2);
+    void          sendNTPPacket();
 
   public:
     NTPClient(UDP& udp);
