@@ -14,9 +14,9 @@ class NTPClient {
     bool          _udpSetup       = false;
 
     const char*   _poolServerName = "pool.ntp.org"; // Default time server
-    IPAddress     _poolServerIP;
     int           _port           = NTP_DEFAULT_LOCAL_PORT;
     long          _timeOffset     = 0;
+    uint16_t      _ms =0;
 
     unsigned long _updateInterval = 60000;  // In ms
 
@@ -24,6 +24,7 @@ class NTPClient {
     unsigned long _lastUpdate     = 0;      // In ms
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
+
 
     void          sendNTPPacket();
 
@@ -33,9 +34,6 @@ class NTPClient {
     NTPClient(UDP& udp, const char* poolServerName);
     NTPClient(UDP& udp, const char* poolServerName, long timeOffset);
     NTPClient(UDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval);
-    NTPClient(UDP& udp, IPAddress poolServerIP);
-    NTPClient(UDP& udp, IPAddress poolServerIP, long timeOffset);
-    NTPClient(UDP& udp, IPAddress poolServerIP, long timeOffset, unsigned long updateInterval);
 
     /**
      * Set time server name
@@ -73,6 +71,7 @@ class NTPClient {
     int getHours() const;
     int getMinutes() const;
     int getSeconds() const;
+    int getMilliSeconds() const;
 
     /**
      * Changes the time offset. Useful for changing timezones dynamically
