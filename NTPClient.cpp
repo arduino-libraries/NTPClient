@@ -204,7 +204,7 @@ void NTPClient::sendNTPPacket() {
   this->_udp->endPacket();
 }
 
-void NTPClient::setRandomPort() {
+void NTPClient::setRandomPort(long minValue, long maxValue) {
   randomSeed(analogRead(0));
-  this->_port = random(1, 65534);
+  this->_port = random(minValue, maxValue);
 }

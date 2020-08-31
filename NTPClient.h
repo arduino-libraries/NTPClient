@@ -47,7 +47,7 @@ class NTPClient {
      /**
      * Set random local port
      */
-    void setRandomPort();
+    void setRandomPort(long minValue, long maxValue);
 
     /**
      * Starts the underlying UDP client with the default local port
