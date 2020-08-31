@@ -73,7 +73,7 @@ void NTPClient::begin() {
   this->begin(NTP_DEFAULT_LOCAL_PORT);
 }
 
-void NTPClient::begin(int port) {
+void NTPClient::begin(long port) {
   this->_port = port;
 
   this->_udp->begin(this->_port);
@@ -120,7 +120,7 @@ bool NTPClient::forceUpdate() {
 bool NTPClient::update() {
   if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
     || this->_lastUpdate == 0) {                                // Update if there was no update yet.
-    if (!this->_udpSetup) this->begin();                         // setup the UDP client if needed
+    if (!this->_udpSetup || this->_port != NTP_DEFAULT_LOCAL_PORT) this->begin(this->_port); // setup the UDP client if needed
     return this->forceUpdate();
   }
   return false;   // return false if update does not occur
@@ -181,7 +181,8 @@ void NTPClient::sendNTPPacket() {
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
-  // (see URL above for details on the packets)
+  // (see URL above for details on the packets)  Serial.println(this->_port);
+
   this->_packetBuffer[0] = 0b11100011;   // LI, Version, Mode
   this->_packetBuffer[1] = 0;     // Stratum, or type of clock
   this->_packetBuffer[2] = 6;     // Polling Interval
@@ -201,4 +202,9 @@ void NTPClient::sendNTPPacket() {
   }
   this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
   this->_udp->endPacket();
+}
+
+void NTPClient::setRandomPort() {
+  randomSeed(analogRead(0));
+  this->_port = random(1, 65534);
 }
