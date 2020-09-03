@@ -73,7 +73,7 @@ void NTPClient::begin() {
   this->begin(NTP_DEFAULT_LOCAL_PORT);
 }
 
-void NTPClient::begin(long port) {
+void NTPClient::begin(unsigned int port) {
   this->_port = port;
 
   this->_udp->begin(this->_port);
@@ -181,7 +181,7 @@ void NTPClient::sendNTPPacket() {
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
-  // (see URL above for details on the packets)  Serial.println(this->_port);
+  // (see URL above for details on the packets)
 
   this->_packetBuffer[0] = 0b11100011;   // LI, Version, Mode
   this->_packetBuffer[1] = 0;     // Stratum, or type of clock
@@ -204,7 +204,7 @@ void NTPClient::sendNTPPacket() {
   this->_udp->endPacket();
 }
 
-void NTPClient::setRandomPort(long minValue, long maxValue) {
+void NTPClient::setRandomPort(unsigned int minValue, unsigned int maxValue) {
   randomSeed(analogRead(0));
   this->_port = random(minValue, maxValue);
 }

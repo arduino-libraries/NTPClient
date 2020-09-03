@@ -15,7 +15,7 @@ class NTPClient {
 
     const char*   _poolServerName = "pool.ntp.org"; // Default time server
     IPAddress     _poolServerIP;
-    long           _port           = NTP_DEFAULT_LOCAL_PORT;
+    unsigned int  _port           = NTP_DEFAULT_LOCAL_PORT;
     long          _timeOffset     = 0;
 
     unsigned long _updateInterval = 60000;  // In ms
@@ -47,7 +47,7 @@ class NTPClient {
      /**
      * Set random local port
      */
-    void setRandomPort(long minValue, long maxValue);
+    void setRandomPort(unsigned int minValue, unsigned int maxValue);
 
     /**
      * Starts the underlying UDP client with the default local port
@@ -57,7 +57,7 @@ class NTPClient {
     /**
      * Starts the underlying UDP client with the specified local port
      */
-    void begin(long port);
+    void begin(unsigned int port);
 
     /**
      * This should be called in the main loop of your application. By default an update from the NTP Server is only
