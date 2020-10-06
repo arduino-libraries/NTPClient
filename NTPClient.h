@@ -94,6 +94,11 @@ class NTPClient {
      * @return time formatted like `hh:mm:ss`
      */
     String getFormattedTime() const;
+    
+    /**
+     * @return date and time seperated by T and Z obtained from the epoch time
+     */
+    String getFormattedDate();
 
     /**
      * @return time in seconds since Jan. 1, 1970
