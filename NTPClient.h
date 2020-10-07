@@ -75,6 +75,7 @@ class NTPClient {
     bool forceUpdate();
 
     int getDay() const;
+    int getDayOfMonth();
     int getHours() const;
     int getMinutes() const;
     int getSeconds() const;
