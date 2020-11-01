@@ -31,8 +31,8 @@ class NTPClient {
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
-    HandlerFunction _updateStartHandler;
-    HandlerFunction _updateEndHandler;
+    HandlerFunction _updateStartHandler = NULL;
+    HandlerFunction _updateEndHandler   = NULL;
 
     void          sendNTPPacket();
 
