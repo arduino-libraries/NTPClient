@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include "Arduino.h"
 
 #include <Udp.h>
@@ -9,6 +11,10 @@
 #define NTP_DEFAULT_LOCAL_PORT 1337
 
 class NTPClient {
+
+  public:
+    typedef std::function<void(void)> HandlerFunction;
+
   private:
     UDP*          _udp;
     bool          _udpSetup       = false;
@@ -24,6 +30,9 @@ class NTPClient {
     unsigned long _lastUpdate     = 0;      // In ms
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
+
+    HandlerFunction _updateStartHandler = NULL;
+    HandlerFunction _updateEndHandler   = NULL;
 
     void          sendNTPPacket();
 
@@ -104,4 +113,24 @@ class NTPClient {
      * Stops the underlying UDP client
      */
     void end();
+
+    /**
+     * 
+     */
+    inline void onStartUpdate (HandlerFunction);
+
+    /**
+     * 
+     */
+    inline void onEndUpdate (HandlerFunction);
 };
+
+inline void
+NTPClient::onStartUpdate (NTPClient::HandlerFunction handler) {
+  _updateStartHandler = handler;
+}
+
+inline void
+NTPClient::onEndUpdate (NTPClient::HandlerFunction handler) {
+  _updateEndHandler = handler;
+}
