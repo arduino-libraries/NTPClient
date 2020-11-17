@@ -47,4 +47,24 @@ void loop() {
 ```
 
 ## Function documentation
-`getEpochTime` returns the unix epoch, which are the seconds elapsed since 00:00:00 UTC on 1 January 1970 (leap seconds are ignored, every day is treated as having 86400 seconds). **Attention**: If you have set a time offset this time offset will be added to your epoch timestamp.
+
+#### Constructor: NTPClient(UDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval)
+  - `udp` : WiFiUDP object.
+  - `poolSeverName` (optional): NTP Server Name. Use the nearest server to your loaction. The server list can be found [here](https://www.ntppool.org/en/). The default is pool.ntp.org (global).
+  - `timeOffset` (optional): Time offset with GMT for your location in seconds. The deafut is 0.
+  - `updateInterval` (optional): Refresh Interval im milliseconds. Default is 60000 millisecond or 1 minute.
+
+#### getEpochTime()
+Returns the unix epoch, which are the seconds elapsed since 00:00:00 UTC on 1 January 1970 (leap seconds are ignored, every day is treated as having 86400 seconds). **Attention**: If you have set a time offset this time offset will be added to your epoch timestamp.
+
+#### getFormattedTime()
+Returns the formatted current time string in hh:mm:ss format.
+
+#### getHours()
+Returns the current "hour" in 24 hour format (0-23).
+
+#### getMinutes()
+Returns the current "minute" integer.
+
+#### getSeconds()
+Returns the current "second" integer.
