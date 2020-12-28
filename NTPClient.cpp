@@ -119,7 +119,7 @@ bool NTPClient::forceUpdate() {
 
 bool NTPClient::update() {
   unsigned long delta;
-  if (millis() > this->_lastUpdate) delta = millis() - this->_lastUpdate; else delta = 0xFFFFFFFF - this->_lastUpdate + millis();
+  if (millis() >= this->_lastUpdate) delta = millis() - this->_lastUpdate; else delta = 0xFFFFFFFF - this->_lastUpdate + millis();
   if ((delta >= this->_updateInterval)     // Update after _updateInterval
     || this->_lastUpdate == 0) {                                // Update if there was no update yet.
     if (!this->_udpSetup || this->_port != NTP_DEFAULT_LOCAL_PORT) this->begin(this->_port); // setup the UDP client if needed
@@ -130,7 +130,7 @@ bool NTPClient::update() {
 
 unsigned long NTPClient::getEpochTime() const {
   unsigned long delta;
-  if (millis() > this->_lastUpdate) delta = millis() - this->_lastUpdate; else delta = 0xFFFFFFFF - this->_lastUpdate + millis();
+  if (millis() >= this->_lastUpdate) delta = millis() - this->_lastUpdate; else delta = 0xFFFFFFFF - this->_lastUpdate + millis();
   return this->_timeOffset + // User offset
          this->_currentEpoc + // Epoc returned by the NTP server
          ((delta) / 1000); // Time since last update
