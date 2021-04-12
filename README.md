@@ -1,6 +1,6 @@
 # NTPClient
 
-[![Build Status](https://travis-ci.org/arduino-libraries/NTPClient.svg?branch=master)](https://travis-ci.org/arduino-libraries/NTPClient)
+[![Compile Examples status](https://github.com/arduino-libraries/NTPClient/actions/workflows/compile-examples.yml/badge.svg)](https://github.com/arduino-libraries/NTPClient/actions/workflows/compile-examples.yml)
 
 Connect to a NTP server, here is how:
 
