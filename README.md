@@ -1,6 +1,7 @@
 # NTPClient
 
 [![Compile Examples status](https://github.com/arduino-libraries/NTPClient/actions/workflows/compile-examples.yml/badge.svg)](https://github.com/arduino-libraries/NTPClient/actions/workflows/compile-examples.yml)
+[![Spell Check status](https://github.com/arduino-libraries/NTPClient/actions/workflows/spell-check.yml/badge.svg)](https://github.com/arduino-libraries/NTPClient/actions/workflows/spell-check.yml)
 
 Connect to a NTP server, here is how:
 
