@@ -11,7 +11,7 @@ const char *password = "<PASSWORD>";
 WiFiUDP ntpUDP;
 
 // You can specify the time server pool and the offset (in seconds, can be
-// changed later with setTimeOffset() ). Additionaly you can specify the
+// changed later with setTimeOffset() ). Additionally you can specify the
 // update interval (in milliseconds, can be changed using setUpdateInterval() ).
 NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 

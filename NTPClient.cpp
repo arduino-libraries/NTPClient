@@ -128,7 +128,7 @@ bool NTPClient::update() {
 
 unsigned long NTPClient::getEpochTime() const {
   return this->_timeOffset + // User offset
-         this->_currentEpoc + // Epoc returned by the NTP server
+         this->_currentEpoc + // Epoch returned by the NTP server
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
