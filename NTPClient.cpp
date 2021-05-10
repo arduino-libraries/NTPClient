@@ -102,16 +102,26 @@ bool NTPClient::forceUpdate() {
     timeout++;
   } while (cb == 0);
 
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
   this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
 
   unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
   unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
+  byte mode = this->_packetBuffer[0] & 0b00000111;
+  byte vn = (this->_packetBuffer[0] & 0b00111000) >> 3;
+  byte stratum = this->_packetBuffer[1];
+
+  if(mode != 4 || stratum >= 16 || highWord == 0 || lowWord == 0 ) {
+    #ifdef DEBUG_NTPClient
+      Serial.println("Answer from NTP looks weird. Discarding it.");
+    #endif
+    return false;
+  }
+
+
   // combine the four bytes (two words) into a long integer
   // this is NTP time (seconds since Jan 1 1900):
   unsigned long secsSince1900 = highWord << 16 | lowWord;
-
+  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
   this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
 
   return true;  // return true after successful update
