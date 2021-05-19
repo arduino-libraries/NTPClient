@@ -75,9 +75,13 @@ class NTPClient {
     bool forceUpdate();
 
     int getDay() const;
+    unsigned long getDay(unsigned long epochTime) const;
     int getHours() const;
+    unsigned long getHours(unsigned long epochTime) const;
     int getMinutes() const;
+    unsigned long getMinutes(unsigned long epochTime) const;
     int getSeconds() const;
+    unsigned long getSeconds(unsigned long epochTime) const;
 
     /**
      * Changes the time offset. Useful for changing timezones dynamically
@@ -94,6 +98,7 @@ class NTPClient {
      * @return time formatted like `hh:mm:ss`
      */
     String getFormattedTime() const;
+    String getFormattedTime(unsigned long epochTime) const;
 
     /**
      * @return time in seconds since Jan. 1, 1970
