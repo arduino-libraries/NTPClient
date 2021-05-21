@@ -181,8 +181,6 @@ void NTPClient::sendNTPPacket() {
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
-  // (see URL above for details on the packets)
-
   this->_packetBuffer[0] = 0b11100011;   // LI, Version, Mode
   this->_packetBuffer[1] = 0;     // Stratum, or type of clock
   this->_packetBuffer[2] = 6;     // Polling Interval
