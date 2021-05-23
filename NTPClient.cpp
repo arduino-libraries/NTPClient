@@ -112,7 +112,7 @@ bool NTPClient::forceUpdate() {
   // this is NTP time (seconds since Jan 1 1900):
   unsigned long secsSince1900 = highWord << 16 | lowWord;
 
-  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+  this->_currentEpoc = secsSince1900 - SEVENTYYEARS;
 
   return true;  // return true after successful update
 }
