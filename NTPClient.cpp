@@ -126,6 +126,10 @@ bool NTPClient::update() {
   return false;   // return false if update does not occur
 }
 
+bool NTPClient::isTimeSet() const {
+  return (this->_lastUpdate != 0); // returns true if the time has been set, else false
+}
+
 unsigned long NTPClient::getEpochTime() const {
   return this->_timeOffset + // User offset
          this->_currentEpoc + // Epoch returned by the NTP server

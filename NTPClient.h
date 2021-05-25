@@ -74,6 +74,13 @@ class NTPClient {
      */
     bool forceUpdate();
 
+    /**
+     * This allows to check if the NTPClient successfully received a NTP packet and set the time.
+     *
+     * @return true if time has been set, else false
+     */
+    bool isTimeSet() const;
+
     int getDay() const;
     int getHours() const;
     int getMinutes() const;
