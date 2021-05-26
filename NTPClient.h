@@ -62,7 +62,7 @@ class NTPClient {
     void setPoolServerIP(IPAddress server_ip);
 
     /**
-     * Set ntp timeout, recommand not above 1000ms
+     * Set ntp timeout (recommendation < 1000ms)
      *
      * @param t_ms
      */

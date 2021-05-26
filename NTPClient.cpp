@@ -82,15 +82,19 @@ void NTPClient::begin(unsigned int port) {
 }
 
 bool NTPClient::forceUpdate() {
+  #ifdef DEBUG_NTPClient
+    Serial.println("Update from NTP Server");
+  #endif
+
   // flush any existing packets
   while(this->_udp->parsePacket() != 0)
     this->_udp->flush();
 
-  uint32_t tik,tok; //tik,tok to record wait time, replace timeout
+  uint32_t tik,tok; //tik,tok to record wait time
   this->sendNTPPacket();
   tik=millis();
   #ifdef DEBUG_NTPClient
-    Serial.println("sent ntp packet");
+    Serial.println("Sent ntp packet");
   #endif
 
   // Wait till data is there or timeout...
@@ -143,14 +147,14 @@ bool NTPClient::forceUpdate() {
     Serial.print(high_word,HEX);Serial.print(", ");
     Serial.println(transmit_dec,6);
   #endif
-  
+
   float ping_delay;
   ping_delay=(tok-tik)/1000.0-(transmit_int-receive_int)-(transmit_dec-receive_dec);
   ping_delay/=2.0;
   if(ping_delay<=0){
     Serial.println("ERROR: ping_delay < 0.0!");
   }
-  
+
   this->_lastUpdate=tok;
   this->_currentEpoc=transmit_int - SEVENZYYEARS ;
   this->_current_epoc_dec=ping_delay+transmit_dec;
@@ -179,7 +183,7 @@ int8_t NTPClient::update() {
           }
       }
   }else{ //if overflowed
-      if(now+0xffffffff-this->_lastUpdate >= this->_updateInterval){ 
+      if(now+0xffffffff-this->_lastUpdate >= this->_updateInterval){
           if(now+0xffffffff-this->_last_fail >= 1500){
               return this->forceUpdate();
           }else{
