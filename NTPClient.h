@@ -18,7 +18,7 @@ class NTPClient {
     unsigned int  _port           = NTP_DEFAULT_LOCAL_PORT;
     long          _timeOffset     = 0;
 
-    unsigned long _updateInterval = 60000;  // In ms
+    unsigned long _updateInterval = 3600000;  // In ms
 
     unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
@@ -106,6 +106,14 @@ class NTPClient {
      * @return time in seconds since Jan. 1, 1970
      */
     unsigned long getEpochTime() const;
+
+    /**
+     * Set internal _currentEpoch from the localTime.  Useful when a hardware
+     * RTC is used to set the initial unix time of NTPClient.
+     * @param localTime, current local time in seconds since Jan. 1, 1970
+     * @return unix epoch in seconds (GMT) since Jan. 1, 1970
+     */
+    unsigned long setEpochTime(unsigned long localTime);
 
     /**
      * Stops the underlying UDP client
