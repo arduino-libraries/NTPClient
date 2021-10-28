@@ -4,7 +4,7 @@
 [![Compile Examples status](https://github.com/arduino-libraries/NTPClient/actions/workflows/compile-examples.yml/badge.svg)](https://github.com/arduino-libraries/NTPClient/actions/workflows/compile-examples.yml)
 [![Spell Check status](https://github.com/arduino-libraries/NTPClient/actions/workflows/spell-check.yml/badge.svg)](https://github.com/arduino-libraries/NTPClient/actions/workflows/spell-check.yml)
 
-Connect to a NTP server, here is how:
+Connect to an NTP server, here is how:
 
 ```cpp
 #include <NTPClient.h>
@@ -50,3 +50,5 @@ void loop() {
 
 ## Function documentation
 `getEpochTime` returns the Unix epoch, which are the seconds elapsed since 00:00:00 UTC on 1 January 1970 (leap seconds are ignored, every day is treated as having 86400 seconds). **Attention**: If you have set a time offset this time offset will be added to your epoch timestamp.
+
+`setEpochTime` sets the Unix epoch internally maintained by the NTPClient library.  The function parameter is the local time converted to number of seconds since 00:00:00 on 1 January 1970 (local time).  Useful when you have a hardware RTC (eg., DS3231) running on local time but uses the NTPClient library for timekeeping.
