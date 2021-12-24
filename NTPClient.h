@@ -81,10 +81,13 @@ class NTPClient {
      */
     bool isTimeSet() const;
 
-    int getDay() const;
     int getHours() const;
     int getMinutes() const;
     int getSeconds() const;
+    int getDayOfWeek() const;
+    int getDay() const;
+    int getMonth() const;
+    int getYear() const;
 
     /**
      * Changes the time offset. Useful for changing timezones dynamically
@@ -97,10 +100,20 @@ class NTPClient {
      */
     void setUpdateInterval(unsigned long updateInterval);
 
+     /**
+     * @return date formatted like `YYYY-MM-DD`
+     */
+    String getFormattedDate() const;
+
     /**
      * @return time formatted like `hh:mm:ss`
      */
     String getFormattedTime() const;
+
+    /**
+     * @return datetime formatted like `YYYY-MM-DDTHH:mm:ss`
+     */
+    String getFormattedDateTime() const;
 
     /**
      * @return time in seconds since Jan. 1, 1970
