@@ -148,6 +148,19 @@ int NTPClient::getMinutes() const {
 int NTPClient::getSeconds() const {
   return (this->getEpochTime() % 60);
 }
+// functions for decode extern epoch time
+int NTPClient::getDay(unsigned long epochTime) const {
+  return (((epochTime  / 86400L) + 4 ) % 7); //0 is Sunday
+}
+int NTPClient::getHours(unsigned long epochTime) const {
+  return ((epochTime  % 86400L) / 3600);
+}
+int NTPClient::getMinutes(unsigned long epochTime) const {
+  return ((epochTime % 3600) / 60);
+}
+int NTPClient::getSeconds(unsigned long epochTime) const {
+  return (epochTime % 60);
+}
 
 String NTPClient::getFormattedTime() const {
   unsigned long rawTime = this->getEpochTime();
