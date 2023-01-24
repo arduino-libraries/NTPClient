@@ -1,3 +1,8 @@
+
+NTPClient 3.1.0 - 2022.01.24
+
+* Added getter to _timeOffset class member. Usefull to know the offset and to mofify it relatively : setTimeOffset(getTimeOffset() + myRelOffset)
+
 NTPClient 3.1.0 - 2016.05.31
 
 * Added functions for changing the timeOffset and updateInterval later. Thanks @SirUli
