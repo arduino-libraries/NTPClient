@@ -148,6 +148,27 @@ int NTPClient::getMinutes() const {
 int NTPClient::getSeconds() const {
   return (this->getEpochTime() % 60);
 }
+int NTPClient::getYears() const {
+    time_t rawtime = this->getEpochTime();
+    struct tm* ti;
+    ti = localtime(&rawtime);
+    int year = ti->tm_year + 1900;
+    return year;
+}
+int NTPClient::getMonths() const {
+    time_t rawtime = this->getEpochTime();
+    struct tm* ti;
+    ti = localtime(&rawtime);
+    int month = (ti->tm_mon + 1) < 10 ? 0 + (ti->tm_mon + 1) : (ti->tm_mon + 1);
+    return month;
+}
+int NTPClient::getDays() const {
+    time_t rawtime = this->getEpochTime();
+    struct tm* ti;
+    ti = localtime(&rawtime);
+    int day = (ti->tm_mday) < 10 ? 0 + (ti->tm_mday) : (ti->tm_mday);
+    return day;
+}
 
 String NTPClient::getFormattedTime() const {
   unsigned long rawTime = this->getEpochTime();
