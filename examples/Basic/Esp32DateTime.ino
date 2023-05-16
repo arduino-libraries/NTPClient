@@ -1,9 +1,8 @@
-#include <NTPClient.h>
-// change next line to use with another board/shield
-#include <ESP8266WiFi.h>
 //#include <WiFi.h> // for WiFi shield Or Esp32
 //#include <WiFi101.h> // for WiFi 101 shield or MKR1000
+#include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include <NTPClient.h>
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
