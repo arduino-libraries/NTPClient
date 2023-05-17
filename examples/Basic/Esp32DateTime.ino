@@ -1,6 +1,8 @@
-//#include <WiFi.h> // for WiFi shield Or Esp32
-//#include <WiFi101.h> // for WiFi 101 shield or MKR1000
-#include <ESP8266WiFi.h>
+#ifdef ESP32
+  #include <WiFi.h>
+#else
+  #include <ESP8266WiFi.h>
+#endif
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 
