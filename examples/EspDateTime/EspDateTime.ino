@@ -19,11 +19,18 @@ void setup() {
   }
 
   timeClient.begin();
+  timeClient.setTimeOffset(10800); //GMT+3
   timeClient.update();
 }
 
 void loop() {
   timeClient.update();
+  
+  /* 
+  while(!timeClient.update()) {
+    timeClient.forceUpdate();
+  }
+  */
 
   if (timeClient.isTimeSet()) {
     unsigned long epochTime = timeClient.getEpochTime();
