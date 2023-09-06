@@ -25,7 +25,7 @@ class NTPClient {
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
-    void          sendNTPPacket();
+    bool          sendNTPPacket();
 
   public:
     NTPClient(UDP& udp);

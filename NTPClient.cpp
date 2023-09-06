@@ -90,7 +90,8 @@ bool NTPClient::forceUpdate() {
   while(this->_udp->parsePacket() != 0)
     this->_udp->flush();
 
-  this->sendNTPPacket();
+  if (!this->sendNTPPacket())
+    return false;
 
   // Wait till data is there or timeout...
   byte timeout = 0;
@@ -104,7 +105,8 @@ bool NTPClient::forceUpdate() {
 
   this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
 
-  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
+  if (this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE) != NTP_PACKET_SIZE)
+    return false;
 
   unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
   unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
@@ -181,7 +183,7 @@ void NTPClient::setPoolServerName(const char* poolServerName) {
     this->_poolServerName = poolServerName;
 }
 
-void NTPClient::sendNTPPacket() {
+bool NTPClient::sendNTPPacket() {
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
@@ -197,13 +199,20 @@ void NTPClient::sendNTPPacket() {
 
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
+
+  bool success = false;
   if  (this->_poolServerName) {
-    this->_udp->beginPacket(this->_poolServerName, 123);
+    success = this->_udp->beginPacket(this->_poolServerName, 123);
   } else {
-    this->_udp->beginPacket(this->_poolServerIP, 123);
+    success = this->_udp->beginPacket(this->_poolServerIP, 123);
   }
-  this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
-  this->_udp->endPacket();
+
+  if (success)
+    if (this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE) == NTP_PACKET_SIZE)
+      if (this->_udp->endPacket())
+        return true;
+
+  return false;
 }
 
 void NTPClient::setRandomPort(unsigned int minValue, unsigned int maxValue) {
