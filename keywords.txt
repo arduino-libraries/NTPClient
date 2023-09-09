@@ -18,3 +18,8 @@ getMinutes	KEYWORD2
 getSeconds	KEYWORD2
 getFormattedTime	KEYWORD2
 getEpochTime	KEYWORD2
+isTimeSet	KEYWORD2
+setTimeOffset	KEYWORD2
+setUpdateInterval	KEYWORD2
+setPoolServerName	KEYWORD2
+getFullFormattedTime	KEYWORD2
