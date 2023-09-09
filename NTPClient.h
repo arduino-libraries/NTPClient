@@ -81,11 +81,13 @@ class NTPClient {
      */
     bool isTimeSet() const;
 
-    int getDay() const;
-    int getHours() const;
-    int getMinutes() const;
-    int getSeconds() const;
-
+    int getDay();
+    int getHours();
+    int getMinutes();
+    int getSeconds();
+    int getYear();
+    int getMonth();
+    int getDate();
     /**
      * Changes the time offset. Useful for changing timezones dynamically
      */
@@ -107,6 +109,9 @@ class NTPClient {
      */
     unsigned long getEpochTime() const;
 
+   void setEpochTime(unsigned long secs);
+
+    String getFullFormattedTime(unsigned long secs = 0);
     /**
      * Stops the underlying UDP client
      */
