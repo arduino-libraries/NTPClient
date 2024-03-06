@@ -41,6 +41,7 @@ jobs:
             platforms: |
               - name: esp8266:esp8266
                 source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+            artifact-name-suffix: esp8266-esp8266-huzzah
 
     steps:
       - name: Checkout repository
@@ -67,4 +68,4 @@ jobs:
         with:
           if-no-files-found: error
           path: ${{ env.SKETCHES_REPORTS_PATH }}
-          name: ${{ env.SKETCHES_REPORTS_PATH }}
+          name: sketches-report-${{ matrix.board.artifact-name-suffix }}
