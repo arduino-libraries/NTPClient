@@ -102,8 +102,6 @@ bool NTPClient::forceUpdate() {
     timeout++;
   } while (cb == 0);
 
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
   this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
 
   unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
@@ -111,10 +109,20 @@ bool NTPClient::forceUpdate() {
   // combine the four bytes (two words) into a long integer
   // this is NTP time (seconds since Jan 1 1900):
   unsigned long secsSince1900 = highWord << 16 | lowWord;
-
-  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
-
-  return true;  // return true after successful update
+  /// return early if received timestamp is invalid
+  if (secsSince1900 == 0) return false;
+  
+  unsigned long unixEpoch = secsSince1900 - SEVENZYYEARS;
+  /// compute the fractional time. we will use it to sync to the nearest millis() 
+  highWord = word(this->_packetBuffer[44], this->_packetBuffer[45]);
+  lowWord = word(this->_packetBuffer[46], this->_packetBuffer[47]);
+  unsigned long fractionPart = highWord << 16 | lowWord;
+  unsigned long milliseconds = ((unsigned long long) fractionPart * 1000) >> 32;
+  
+  this->_lastUpdate = (unsigned long) (millis() - milliseconds);
+  this->_currentEpoc = unixEpoch;
+    
+  return true;
 }
 
 bool NTPClient::update() {
@@ -131,9 +139,24 @@ bool NTPClient::isTimeSet() const {
 }
 
 unsigned long NTPClient::getEpochTime() const {
+  unsigned long t = millis();
+  /// if millis() has rollover, get difference between lastUpdate and maximum value of uint32_t.
+  /// then add it to current value of millis() and add 1 for when millis() was 0.
+  if (t < this->_lastUpdate) {
+    t = (((unsigned long) -1) - this->_lastUpdate) + t + 1; 
+  } else {
+    t = t - this->_lastUpdate;   
+  }
   return this->_timeOffset + // User offset
-         this->_currentEpoc + // Epoch returned by the NTP server
-         ((millis() - this->_lastUpdate) / 1000); // Time since last update
+         this->_currentEpoc + // Epoc returned by the NTP server
+         (t / 1000); // Time since last update
+}
+
+unsigned long NTPClient::setEpochTime(unsigned long localTime) {
+    this->_currentEpoc = localTime - this->_timeOffset;
+    this->_lastUpdate = millis();
+    /// Return Unix epoch
+    return (this->_currentEpoc);
 }
 
 int NTPClient::getDay() const {
