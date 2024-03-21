@@ -136,7 +136,7 @@ unsigned long NTPClient::getEpochTime() const {
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
-int NTPClient::getDay() const {
+int NTPClient::getDayOfWeek() const {
   return (((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
 }
 int NTPClient::getHours() const {
@@ -147,6 +147,97 @@ int NTPClient::getMinutes() const {
 }
 int NTPClient::getSeconds() const {
   return (this->getEpochTime() % 60);
+}
+
+int NTPClient::getDay() const {
+
+  long days = this->getEpochTime()  / 86400L;
+  int fullYears = days / 365;
+  int overDays = days % 365;
+
+  int leapYears = (fullYears - 2) / 4;
+  if (leapYears > overDays) {
+	fullYears--;
+  }
+
+  int currentYear = 1970 + fullYears;
+
+  int thisYearIsLeap = currentYear % 4 == 0 ? 1 : 0;
+
+  int dayOfYear = (days - leapYears) % ( 365 + thisYearIsLeap);
+  if(dayOfYear == 0) {
+	dayOfYear = 365 + thisYearIsLeap;
+  }
+
+  int daysInMonth[12] = {31, 28 + thisYearIsLeap, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+  for( int month = 0; month < 12; month++) {
+	if(dayOfYear < daysInMonth[month]) {
+		return dayOfYear;
+	} else {
+		dayOfYear -= daysInMonth[month];
+	}
+  }
+
+  return -1;
+}
+
+int NTPClient::getMonth() const {
+
+  long days = this->getEpochTime()  / 86400L;
+  int fullYears = days / 365;
+  int overDays = days % 365;
+
+  int leapYears = (fullYears - 2) / 4;
+  if (leapYears > overDays) {
+	fullYears--;
+  }
+
+  int currentYear = 1970 + leapYears;
+
+  int thisYearIsLeap = currentYear % 4 == 0 ? 1 : 0;
+
+  int dayOfYear = (days - leapYears) % ( 365 + thisYearIsLeap);
+  if(dayOfYear == 0) {
+	dayOfYear = 365 + thisYearIsLeap;
+  }
+
+  int daysInMonth[12] = {31, 28 + thisYearIsLeap, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+  for( int month = 0; month < 12; month++) {
+	if(dayOfYear < daysInMonth[month]) {
+		return month + 1;
+	} else {
+		dayOfYear -= daysInMonth[month];
+	}
+  }
+
+  return -1;
+}
+
+int NTPClient::getYear() const {
+  long days = this->getEpochTime()  / 86400L;
+  int fullYears = days / 365;
+  int overDays = days % 365;
+
+  int leapYears = (fullYears - 2) / 4;
+
+  if (leapYears > overDays) {
+	fullYears--;
+  }
+  return 1970 + fullYears;
+}
+
+String NTPClient::getFormattedDate() const {
+  String yearStr = String(this->getYear());
+
+  unsigned int month = this->getMonth();
+  String monthStr = month < 10 ? "0" + String(month) : String(month);
+
+  unsigned int day = this->getDay();
+  String dayStr = day < 10 ? "0" + String(day) : String(day);
+
+  return yearStr + "-" + monthStr + "-" + dayStr;
 }
 
 String NTPClient::getFormattedTime() const {
@@ -161,6 +252,10 @@ String NTPClient::getFormattedTime() const {
   String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
 
   return hoursStr + ":" + minuteStr + ":" + secondStr;
+}
+
+String NTPClient::getFormattedDateTime() const {
+  return this->getFormattedDate() + "T" + this->getFormattedTime();
 }
 
 void NTPClient::end() {
