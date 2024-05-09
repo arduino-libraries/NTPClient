@@ -109,7 +109,7 @@ class NTPClient {
     void setUpdateInterval(unsigned long updateInterval);
 
     /**
-     * @return Date Time string formated. The available format codes are:
+     * @return Date Time string formatted. The available format codes are:
       %Y: Full year (e.g., 2023)
       %y: Last two digits of the year (e.g., 23 for 2023)
       %m: Month as a zero-padded decimal number (01 to 12)
