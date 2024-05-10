@@ -42,7 +42,7 @@ void setup(){
 void loop() {
   timeClient.update();
 
-  Serial.println(timeClient.getFormattedTime());
+  Serial.println(timeClient.getFormattedDateTime("%H:%M:%S"));
   if(timeClient.isTimeSet()) {
     if (hour == timeClient.getHours() && minute == timeClient.getMinutes()) {
       digitalWrite(led, 0);
