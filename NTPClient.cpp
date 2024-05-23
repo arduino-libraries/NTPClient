@@ -21,48 +21,26 @@
 
 #include "NTPClient.h"
 
-const DateLanguageData EnglishData = {
+const NTPClient::DateLanguageData NTPClient::EnglishData = {
     {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"},
     {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"},
     {"Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"},
     {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}
 };
 
-const DateLanguageData SpanishData = {
+const NTPClient::DateLanguageData NTPClient::SpanishData = {
     {"Dom", "Lun", "Mart", "Miérc", "Juev", "Vier", "Sáb"},
     {"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"},
     {"ene", "feb", "mar", "abr", "mayo", "jun", "jul", "ago", "sept", "oct", "nov", "dic"},
     {"enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"}
 };
 
-const DateLanguageData PortugueseData = {
+const NTPClient::DateLanguageData NTPClient::PortugueseData = {
     {"Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"},
     {"Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"},
     {"jan", "fev", "mar", "abr", "maio", "jun", "jul", "ago", "set", "out", "nov", "dez"},
     {"janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"}
 };
-
-// Language map definition
-const struct LanguageMap {
-    const char* code;
-    const DateLanguageData* data;
-} languageMap[] = {
-    {"en", &EnglishData},
-    {"es", &SpanishData},
-    {"pt", &PortugueseData}
-    // Add new languages here
-};
-const int languageMapSize = sizeof(languageMap) / sizeof(LanguageMap);
-
-// Function to find language data by code
-const DateLanguageData* findLanguageData(const String& code) {
-    for (int i = 0; i < languageMapSize; ++i) {
-        if (code == languageMap[i].code) {
-            return languageMap[i].data;
-        }
-    }
-    return &EnglishData; // Default to English if not found
-}
 
 NTPClient::NTPClient(UDP& udp) {
   this->_udp            = &udp;
@@ -169,6 +147,16 @@ bool NTPClient::update() {
   return false;   // return false if update does not occur
 }
 
+// Function to find language data by code
+const NTPClient::DateLanguageData* NTPClient::findLanguageData(const String& code) const {
+    for (int i = 0; i < languageMapSize; ++i) {
+        if (code == languageMap[i].code) {
+            return languageMap[i].data;
+        }
+    }
+    return &EnglishData; // Default to English if not found
+}
+
 bool NTPClient::isTimeSet() const {
   return (this->_lastUpdate != 0); // returns true if the time has been set, else false
 }
@@ -179,57 +167,11 @@ unsigned long NTPClient::getEpochTime() const {
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
-int NTPClient::getDayOfWeek() const {
-  return (((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
-}
-int NTPClient::getHours() const {
-  return ((this->getEpochTime()  % 86400L) / 3600);
-}
-int NTPClient::getMinutes() const {
-  return ((this->getEpochTime() % 3600) / 60);
-}
-int NTPClient::getSeconds() const {
-  return (this->getEpochTime() % 60);
-}
-
-int NTPClient::getDay() const {
-    long days = this->getEpochTime() / 86400L;
-    int fullYears = days / 365;
-    int overDays = days % 365;
-
-    // Adjust for leap years
-    int leapYears = (fullYears + 1) / 4; // +1 because year 0 (1970) is not a leap year
-    if (leapYears > overDays) {
-        fullYears--;
-    }
-
-    int currentYear = 1970 + fullYears;
-
-    // Check if current year is a leap year
-    bool thisYearIsLeap = (currentYear % 4 == 0 && (currentYear % 100 != 0 || currentYear % 400 == 0));
-
-    // Calculate day of the year
-    int dayOfYear = (days - ((fullYears * 365) + leapYears)) + 1; // +1 to convert from 0-based to 1-based
-
-    int daysInMonth[12] = {31, 28 + thisYearIsLeap, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-    int monthDay = dayOfYear;
-    for (int month = 0; month < 12; month++) {
-        if (monthDay <= daysInMonth[month]) {
-            return monthDay; // Correct day of the month
-        }
-        monthDay -= daysInMonth[month];
-    }
-
-    return -1; // Error case, should not happen
-}
-
-int NTPClient::getMonth() const {
-    long days = this->getEpochTime() / 86400L; // Total days since epoch
-    int fullYears = 0;
+NTPClient::FullDateComponents NTPClient::calculateFullDateComponents() const {
+    unsigned long epochTime = this->getEpochTime();
+    long days = epochTime / 86400L; // Total days since epoch
     int year = 1970;
 
-    // Correctly account for leap years in the loop
     while (days > 365) {
         if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
             if (days > 366) {
@@ -244,42 +186,50 @@ int NTPClient::getMonth() const {
         }
     }
 
+    int dayOfYear = static_cast<int>(days) + 1; // +1 to convert from 0-based to 1-based
     bool thisYearIsLeap = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
     int daysInMonth[12] = {31, 28 + thisYearIsLeap, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
     int month = 0;
     for (month = 0; month < 12; month++) {
-        if (days < daysInMonth[month]) {
+        if (dayOfYear <= daysInMonth[month]) {
             break; // Found the current month
         }
-        days -= daysInMonth[month];
+        dayOfYear -= daysInMonth[month];
     }
 
-    return month + 1; // Month is 1-based
+    return {year, month + 1, dayOfYear}; // Month is 1-based
 }
 
 int NTPClient::getYear() const {
-    long days = this->getEpochTime() / 86400L; // Total days since epoch
-    int year = 1970;
+    FullDateComponents dateComponents = calculateFullDateComponents();
+    return dateComponents.year;
+}
 
-    while (days > 365) {
-        if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
-            // Leap year
-            if (days > 366) {
-                days -= 366;
-                year += 1;
-            } else {
-                // If days <= 366 in a leap year, then we've found the current year
-                break;
-            }
-        } else {
-            // Not a leap year
-            days -= 365;
-            year += 1;
-        }
-    }
+int NTPClient::getMonth() const {
+    FullDateComponents dateComponents = calculateFullDateComponents();
+    return dateComponents.month;
+}
 
-    return year;
+int NTPClient::getDay() const {
+    FullDateComponents dateComponents = calculateFullDateComponents();
+    return dateComponents.day;
+}
+
+int NTPClient::getDayOfWeek() const {
+  return (((this->getEpochTime()  / 86400L) + 4 ) % 7); // 0 is Sunday
+}
+
+int NTPClient::getHours() const {
+  return ((this->getEpochTime()  % 86400L) / 3600);
+}
+
+int NTPClient::getMinutes() const {
+  return ((this->getEpochTime() % 3600) / 60);
+}
+
+int NTPClient::getSeconds() const {
+  return (this->getEpochTime() % 60);
 }
 
 String NTPClient::getFormattedDateTime(const String& format) {
