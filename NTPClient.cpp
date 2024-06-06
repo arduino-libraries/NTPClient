@@ -149,18 +149,61 @@ int NTPClient::getSeconds() const {
   return (this->getEpochTime() % 60);
 }
 
-String NTPClient::getFormattedTime() const {
+
+int NTPClient::getYear() const
+{
+  time_t rawtime = this->getEpochTime();
+  struct tm *ti;
+  ti = localtime(&rawtime);
+  return ti->tm_year + 1900;
+}
+
+int NTPClient::getMonth() const
+{
+  time_t rawtime = this->getEpochTime();
+  struct tm *ti;
+  ti = localtime(&rawtime);
+  return ti->tm_mon + 1;
+}
+
+int NTPClient::getDate() const
+{
+  time_t rawtime = this->getEpochTime();
+  struct tm *ti;
+  ti = localtime(&rawtime);
+  return ti->tm_mday;
+}
+
+void NTPClient::getTM_t(tm &ti) const
+{
+  time_t rawtime = this->getEpochTime();
+  struct tm *ti;
+  ti = localtime(&rawtime); 
+}
+
+String getFirstZeroDigit(uint16_t digit)
+{
+  return digit < 10 ? "0" + String(digit) : String(digit);
+}
+
+String NTPClient::getFormattedTime() const
+{
   unsigned long rawTime = this->getEpochTime();
   unsigned long hours = (rawTime % 86400L) / 3600;
-  String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
-
   unsigned long minutes = (rawTime % 3600) / 60;
-  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
-
   unsigned long seconds = rawTime % 60;
-  String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
 
-  return hoursStr + ":" + minuteStr + ":" + secondStr;
+  return getFirstZeroDigit(hours) + ":" + getFirstZeroDigit(minutes) + ":" + getFirstZeroDigit(seconds);
+}
+
+String NTPClient::getFullFormattedTime() const
+{
+  time_t rawtime = this->getEpochTime();
+  struct tm *ti;
+  ti = localtime(&rawtime);
+
+  return String(ti->tm_year + 1900) + "-" + getFirstZeroDigit(ti->tm_mon + 1) + "-" + getFirstZeroDigit(ti->tm_mday) + " " +
+         getFirstZeroDigit(ti->tm_hour) + ":" + getFirstZeroDigit(ti->tm_min) + ":" + getFirstZeroDigit(ti->tm_sec);
 }
 
 void NTPClient::end() {
