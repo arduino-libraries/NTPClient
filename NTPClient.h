@@ -85,7 +85,11 @@ class NTPClient {
     int getHours() const;
     int getMinutes() const;
     int getSeconds() const;
-
+    int getYear() const;
+    int getMonth() const;
+    int getDate() const;
+  
+    void getTM_t(tm &ti) const;
     /**
      * Changes the time offset. Useful for changing timezones dynamically
      */
@@ -101,6 +105,8 @@ class NTPClient {
      * @return time formatted like `hh:mm:ss`
      */
     String getFormattedTime() const;
+
+    String getFullFormattedTime() const;
 
     /**
      * @return time in seconds since Jan. 1, 1970
