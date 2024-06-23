@@ -199,20 +199,6 @@ int NTPClient::getDate() const
   return ti->tm_mday;
 }
 
-void NTPClient::getTM_t(tmElements_t &tm) const
-{
-  time_t rawtime = this->getEpochTime();
-  struct tm *ti;
-  ti = localtime(&rawtime);
-
-  tm.Year = ti->tm_year + 1900;
-  tm.Month = ti->tm_mon + 1;
-  tm.Day = ti->tm_mday;
-  tm.Hour = ti->tm_hour;
-  tm.Minute = ti->tm_min;
-  tm.Second = ti->tm_sec;
-}
-
 String NTPClient::getFormattedTime() const
 {
   unsigned long rawTime = this->getEpochTime();
