@@ -38,6 +38,11 @@ class NTPClient {
     NTPClient(UDP& udp, IPAddress poolServerIP, long timeOffset, unsigned long updateInterval);
 
     /**
+     * Update config by runtime
+     */
+  void config_update(UDP &udp, const char *poolServerName, long timeOffset, unsigned long updateInterval);
+
+    /**
      * Set time server name
      *
      * @param poolServerName
