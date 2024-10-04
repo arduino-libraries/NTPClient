@@ -4,7 +4,7 @@
 
 #include <Udp.h>
 
-#define SEVENZYYEARS 2208988800UL
+#define SEVENTY_YEARS 2208988800UL
 #define NTP_PACKET_SIZE 48
 #define NTP_DEFAULT_LOCAL_PORT 1337
 
@@ -22,12 +22,13 @@ class NTPClient {
 
     bool          _needUpdate     = true;
     unsigned long _sendTime       = 0;
-    unsigned long _currentEpoc    = 0;      // In s
+    unsigned long _currentEpoch   = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
     void          sendNTPPacket();
+    bool          receiveNTPPacket(unsigned long timeout = 0);
 
   public:
     NTPClient(UDP& udp);
@@ -62,19 +63,26 @@ class NTPClient {
     void begin(unsigned int port);
 
     /**
+     * Returns true if an first time or if the last update was more than configured interval ago.
+     *
+     * @return true on need, false on "not now"
+     */
+    bool needUpdate();
+
+    /**
      * This should be called in the main loop of your application. By default an update from the NTP Server is only
      * made every 60 seconds. This can be configured in the NTPClient constructor.
      *
      * @return true on success, false on failure
      */
-    bool update();
+    bool update(unsigned long timeout = 1000);
 
     /**
      * This will force the update from the NTP Server.
      *
      * @return true on success, false on failure
      */
-    bool forceUpdate();
+    bool forceUpdate(unsigned long timeout = 1000);
 
     /**
      * Alternatevly this can be called instead of update() in the main loop of your application. 
