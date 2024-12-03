@@ -231,3 +231,7 @@ void NTPClient::setRandomPort(unsigned int minValue, unsigned int maxValue) {
   randomSeed(analogRead(0));
   this->_port = random(minValue, maxValue);
 }
+
+void NTPClient::setLastUpdate(unsigned long sec) {
+  this->_lastUpdate = sec;
+}

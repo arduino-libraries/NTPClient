@@ -138,4 +138,9 @@ class NTPClient {
      * Stops the underlying UDP client
      */
     void end();
+
+    /**
+     * Set the last update time
+     */
+    void setLastUpdate(unsigned long sec);
 };
