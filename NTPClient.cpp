@@ -173,12 +173,33 @@ void NTPClient::setTimeOffset(int timeOffset) {
   this->_timeOffset     = timeOffset;
 }
 
+long NTPClient::getTimeOffset() {
+  return this->_timeOffset;
+}
+
 void NTPClient::setUpdateInterval(unsigned long updateInterval) {
   this->_updateInterval = updateInterval;
 }
 
+unsigned long NTPClient::getUpdateInterval() {
+  return this->_updateInterval;
+}
+
 void NTPClient::setPoolServerName(const char* poolServerName) {
     this->_poolServerName = poolServerName;
+}
+
+const char *NTPClient::getPoolServerName() {
+    return this->_poolServerName;
+}
+
+void NTPClient::setPoolServerIP(IPAddress poolServerIP) {
+  this->_poolServerIP = poolServerIP;
+  this->_poolServerName = NULL;
+}
+
+IPAddress NTPClient::getPoolServerIP() {
+    return this->_poolServerIP;
 }
 
 void NTPClient::sendNTPPacket() {
