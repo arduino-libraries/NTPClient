@@ -139,6 +139,14 @@ unsigned long NTPClient::getEpochTime() const {
 int NTPClient::getDay() const {
   return (((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
 }
+
+int NTPClient::getDayOfMonth() const {
+  time_t rawtime = this->getEpochTime() ;
+  struct tm * ti;
+  ti = localtime (&rawtime);
+  return ti->tm_mday; // day of month
+}
+
 int NTPClient::getHours() const {
   return ((this->getEpochTime()  % 86400L) / 3600);
 }
