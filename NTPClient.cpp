@@ -137,27 +137,42 @@ unsigned long NTPClient::getEpochTime() const {
 }
 
 int NTPClient::getDay() const {
-  return (((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
+  return getDay(this->getEpochTime());
+}
+unsigned long NTPClient::getDay(unsigned long epochTime) const {
+  return (((epochTime  / 86400L) + 4 ) % 7); //0 is Sunday
 }
 int NTPClient::getHours() const {
-  return ((this->getEpochTime()  % 86400L) / 3600);
+  return getHours(this->getEpochTime());
+}
+unsigned long NTPClient::getHours(unsigned long epochTime) const {
+  return ((epochTime  % 86400L) / 3600);
 }
 int NTPClient::getMinutes() const {
-  return ((this->getEpochTime() % 3600) / 60);
+  return getMinutes(this->getEpochTime());
+}
+unsigned long NTPClient::getMinutes(unsigned long epochTime) const {
+  return ((epochTime % 3600) / 60);
 }
 int NTPClient::getSeconds() const {
-  return (this->getEpochTime() % 60);
+  return getSeconds(this->getEpochTime());
+}
+unsigned long NTPClient::getSeconds(unsigned long epochTime) const {
+  return (epochTime % 60);
 }
 
 String NTPClient::getFormattedTime() const {
-  unsigned long rawTime = this->getEpochTime();
-  unsigned long hours = (rawTime % 86400L) / 3600;
+  return getFormattedTime(this->getEpochTime());
+}
+
+String NTPClient::getFormattedTime(unsigned long rawTime) const {
+  unsigned long hours = getHours(rawTime);
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
 
-  unsigned long minutes = (rawTime % 3600) / 60;
+  unsigned long minutes = getMinutes(rawTime);
   String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
 
-  unsigned long seconds = rawTime % 60;
+  unsigned long seconds = getSeconds(rawTime);
   String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
 
   return hoursStr + ":" + minuteStr + ":" + secondStr;
