@@ -22,6 +22,7 @@ class NTPClient {
 
     unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
+    bool          _lastUpdateOk   = false;  //
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
@@ -43,6 +44,13 @@ class NTPClient {
      * @param poolServerName
      */
     void setPoolServerName(const char* poolServerName);
+
+    /**
+     * Set time server IP
+     *
+     * @param poolServerIP
+     */
+    void setPoolServerIP(IPAddress poolServerIP);
 
      /**
      * Set random local port
