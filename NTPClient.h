@@ -85,7 +85,11 @@ class NTPClient {
     int getHours() const;
     int getMinutes() const;
     int getSeconds() const;
-
+    int getDay(unsigned long epochTime) const;
+    int getHours(unsigned long epochTime) const;
+    int getMinutes(unsigned long epochTime) const;
+    int getSeconds(unsigned long epochTime) const;
+    
     /**
      * Changes the time offset. Useful for changing timezones dynamically
      */
