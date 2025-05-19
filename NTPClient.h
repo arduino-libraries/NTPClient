@@ -43,6 +43,21 @@ class NTPClient {
      * @param poolServerName
      */
     void setPoolServerName(const char* poolServerName);
+  
+    /**
+     * Set time server IP address
+     *
+     * @param poolServerIP
+     */
+    void setPoolServerIP(IPAddress poolServerIP);
+    
+    /**
+     * Set time server domain or IP address
+     *
+     * @param poolServerAddress
+     */
+    void setPoolServerAddress(const char* poolServerAddress);
+    void setPoolServerAddress(IPAddress poolServerAddress);
 
      /**
      * Set random local port
