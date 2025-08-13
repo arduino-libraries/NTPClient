@@ -44,6 +44,23 @@ class NTPClient {
      */
     void setPoolServerName(const char* poolServerName);
 
+    /**
+     * Get time server name
+     */
+    const char *getPoolServerName();
+
+    /**
+     * Set time server IP
+     *
+     * @param poolServerIP
+     */
+    void setPoolServerIP(IPAddress poolServerIP);
+
+    /*
+     * Get time server IP
+     */
+    IPAddress getPoolServerIP();
+
      /**
      * Set random local port
      */
@@ -92,10 +109,20 @@ class NTPClient {
     void setTimeOffset(int timeOffset);
 
     /**
+     * Get the time offset
+     */
+    long getTimeOffset();
+
+    /**
      * Set the update interval to another frequency. E.g. useful when the
      * timeOffset should not be set in the constructor
      */
     void setUpdateInterval(unsigned long updateInterval);
+
+    /**
+     * Get the update interval
+     */
+    unsigned long getUpdateInterval();
 
     /**
      * @return time formatted like `hh:mm:ss`
@@ -111,4 +138,9 @@ class NTPClient {
      * Stops the underlying UDP client
      */
     void end();
+
+    /**
+     * Set the last update time
+     */
+    void setLastUpdate(unsigned long sec);
 };
