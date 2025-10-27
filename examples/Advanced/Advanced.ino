@@ -30,8 +30,7 @@ void setup(){
 
 void loop() {
   timeClient.update();
-
-  Serial.println(timeClient.getFormattedTime());
-
+  Serial.println(timeClient.getFormattedDateTime("%d %B %Y"));
+  Serial.println(timeClient.getFormattedDateTime("%Y-%m-%d %H:%M:%S"));
   delay(1000);
 }
