@@ -20,6 +20,8 @@ class NTPClient {
 
     unsigned long _updateInterval = 60000;  // In ms
 
+    bool          _needUpdate     = true;
+    unsigned long _sendTime       = 0;
     unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
 
@@ -75,6 +77,14 @@ class NTPClient {
     bool forceUpdate();
 
     /**
+     * Alternatevly this can be called instead of update() in the main loop of your application. 
+     * AsyncUpdate from the NTP Server is made every _updateInterval milliseconds. 
+     *
+     * @return 0 on success, -1 on failure, 1 if no update is needed, 2 if update is in progress
+     */
+    int asyncUpdate();
+
+    /**
      * This allows to check if the NTPClient successfully received a NTP packet and set the time.
      *
      * @return true if time has been set, else false
@@ -106,6 +116,12 @@ class NTPClient {
      * @return time in seconds since Jan. 1, 1970
      */
     unsigned long getEpochTime() const;
+
+
+    /**
+     * @return time in milliseconds since Jan. 1, 1970 (UTC+0)
+     */
+    long long getEpochTimeMillis() const;
 
     /**
      * Stops the underlying UDP client
