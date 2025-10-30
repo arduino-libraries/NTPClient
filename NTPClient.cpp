@@ -114,6 +114,12 @@ bool NTPClient::forceUpdate() {
 
   this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
 
+  // get also the most significant 16 bits of the fraction of the second
+  unsigned long fracWord = word(this->_packetBuffer[44], this->_packetBuffer[45]);
+  
+  // Account for fraction of the second.
+  this->_lastUpdate -=  (fracWord/66); // should be devided by 2^16/1000 = 65.536 but 66 is close enough
+  
   return true;  // return true after successful update
 }
 
