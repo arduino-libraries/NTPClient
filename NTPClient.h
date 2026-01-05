@@ -11,6 +11,7 @@
 class NTPClient {
   private:
     UDP*          _udp;
+    String        _dateLanguage   = "en"; // Default language
     bool          _udpSetup       = false;
 
     const char*   _poolServerName = "pool.ntp.org"; // Default time server
@@ -26,6 +27,39 @@ class NTPClient {
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
     void          sendNTPPacket();
+
+    struct DateLanguageData {
+        const char* shortWeekDays[7];
+        const char* longWeekDays[7];
+        const char* shortMonths[12];
+        const char* longMonths[12];
+    };
+
+    struct FullDateComponents {
+        int year;
+        int month;
+        int day;
+    };
+
+    // Language map
+    struct LanguageMap {
+        const char* code;
+        const DateLanguageData* data;
+    };
+
+    static const DateLanguageData EnglishData;
+    static const DateLanguageData SpanishData;
+    static const DateLanguageData PortugueseData;
+
+    const LanguageMap languageMap[3] = {
+        {"en", &EnglishData},
+        {"es", &SpanishData},
+        {"pt", &PortugueseData}
+    };
+
+    const int languageMapSize = sizeof(languageMap) / sizeof(languageMap[0]);
+    const DateLanguageData* findLanguageData(const String& code) const;
+    FullDateComponents calculateFullDateComponents() const;
 
   public:
     NTPClient(UDP& udp);
@@ -81,7 +115,10 @@ class NTPClient {
      */
     bool isTimeSet() const;
 
+    int getDayOfWeek() const;
     int getDay() const;
+    int getMonth() const;
+    int getYear() const;
     int getHours() const;
     int getMinutes() const;
     int getSeconds() const;
@@ -98,9 +135,28 @@ class NTPClient {
     void setUpdateInterval(unsigned long updateInterval);
 
     /**
-     * @return time formatted like `hh:mm:ss`
+     * @return Date Time string formatted. The available format codes are:
+      %Y: Full year (e.g., 2023)
+      %y: Last two digits of the year (e.g., 23 for 2023)
+      %m: Month as a zero-padded decimal number (01 to 12)
+      %d: Day of the month as a zero-padded decimal number (01 to 31)
+      %H: Hour (00 to 23) as a zero-padded decimal number
+      %M: Minute as a zero-padded decimal number (00 to 59)
+      %S: Second as a zero-padded decimal number (00 to 59)
+      %a: Abbreviated weekday name according to the current locale
+      %A: Full weekday name according to the current locale
+      %w: Weekday as a decimal number (0 for Sunday through 6 for Saturday)
+      %b: Abbreviated month name according to the current locale
+      %B: Full month name according to the current locale
+      %p: "AM" or "PM" based on the hour (Note: This is locale-sensitive and might not be applicable in all languages)
      */
-    String getFormattedTime() const;
+    String getFormattedDateTime(const String &format);
+
+     /**
+     * Set language for displaying date. Available languages are 'pt', 'es' and 'en' (default)
+     * @param dateLanguage
+     */
+    void setDateLanguage(const String &dateLanguage);
 
     /**
      * @return time in seconds since Jan. 1, 1970
