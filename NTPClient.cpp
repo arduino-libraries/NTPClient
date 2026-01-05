@@ -203,7 +203,11 @@ void NTPClient::sendNTPPacket() {
     this->_udp->beginPacket(this->_poolServerIP, 123);
   }
   this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
-  this->_udp->endPacket();
+  if (this->_udp->endPacket() == 0) {
+    // recovery if UDP client encounters any errors
+    this->end();
+    this->begin(this->_port);
+  }
 }
 
 void NTPClient::setRandomPort(unsigned int minValue, unsigned int maxValue) {
