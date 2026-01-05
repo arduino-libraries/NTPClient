@@ -101,20 +101,32 @@ bool NTPClient::forceUpdate() {
     if (timeout > 100) return false; // timeout after 1000 ms
     timeout++;
   } while (cb == 0);
-
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
-  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
-
-  unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
-  unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
-  // combine the four bytes (two words) into a long integer
-  // this is NTP time (seconds since Jan 1 1900):
-  unsigned long secsSince1900 = highWord << 16 | lowWord;
-
-  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
-
-  return true;  // return true after successful update
+  unsigned long newLastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
+  
+  int len = this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
+  if (len == 48) {
+    unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
+    unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
+    // combine the four bytes (two words) into a long integer
+    // this is NTP time (seconds since Jan 1 1900):
+    unsigned long secsSince1900 = highWord << 16 | lowWord;
+    if (secsSince1900 > 0x8000000UL) {
+      this->_lastUpdate = newLastUpdate;
+      this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+      return true;  // return true after successful update
+    }
+    else {
+      #ifdef DEBUG_NTPClient
+        Serial.println("NTP Server time too far in the past");
+      #endif
+    }
+  }
+  else {
+    #ifdef DEBUG_NTPClient
+      Serial.println("NTP Server message lenght not 48");
+    #endif
+  }
+  return false;
 }
 
 bool NTPClient::update() {
@@ -147,6 +159,19 @@ int NTPClient::getMinutes() const {
 }
 int NTPClient::getSeconds() const {
   return (this->getEpochTime() % 60);
+}
+// functions for decode extern epoch time
+int NTPClient::getDay(unsigned long epochTime) const {
+  return (((epochTime  / 86400L) + 4 ) % 7); //0 is Sunday
+}
+int NTPClient::getHours(unsigned long epochTime) const {
+  return ((epochTime  % 86400L) / 3600);
+}
+int NTPClient::getMinutes(unsigned long epochTime) const {
+  return ((epochTime % 3600) / 60);
+}
+int NTPClient::getSeconds(unsigned long epochTime) const {
+  return (epochTime % 60);
 }
 
 String NTPClient::getFormattedTime() const {
