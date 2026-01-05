@@ -81,7 +81,7 @@ void NTPClient::begin(unsigned int port) {
   this->_udpSetup = true;
 }
 
-bool NTPClient::forceUpdate() {
+uint8_t NTPClient::forceUpdate() {
   #ifdef DEBUG_NTPClient
     Serial.println("Update from NTP Server");
   #endif
@@ -98,7 +98,7 @@ bool NTPClient::forceUpdate() {
   do {
     delay ( 10 );
     cb = this->_udp->parsePacket();
-    if (timeout > 100) return false; // timeout after 1000 ms
+    if (timeout > 100) return 0; // timeout after 1000 ms; return 0 if update fails
     timeout++;
   } while (cb == 0);
 
@@ -114,16 +114,16 @@ bool NTPClient::forceUpdate() {
 
   this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
 
-  return true;  // return true after successful update
+  return 2;  // return 2 if update occurs successfully
 }
 
-bool NTPClient::update() {
+uint8_t NTPClient::update() {
   if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
     || this->_lastUpdate == 0) {                                // Update if there was no update yet.
     if (!this->_udpSetup || this->_port != NTP_DEFAULT_LOCAL_PORT) this->begin(this->_port); // setup the UDP client if needed
     return this->forceUpdate();
   }
-  return false;   // return false if update does not occur
+  return 1;   // return 1 if update does not occur
 }
 
 bool NTPClient::isTimeSet() const {
