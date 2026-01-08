@@ -87,6 +87,16 @@ class NTPClient {
     int getSeconds() const;
 
     /**
+     * @return hours in 12-hour format (1-12)
+     */
+    int getHours12() const;
+
+    /**
+     * @return true if PM, false if AM
+     */
+    bool isPM() const;
+
+    /**
      * Changes the time offset. Useful for changing timezones dynamically
      */
     void setTimeOffset(int timeOffset);
@@ -101,6 +111,11 @@ class NTPClient {
      * @return time formatted like `hh:mm:ss`
      */
     String getFormattedTime() const;
+
+    /**
+     * @return time formatted like `hh:mm:ss AM` or `hh:mm:ss PM`
+     */
+    String getFormattedTime12() const;
 
     /**
      * @return time in seconds since Jan. 1, 1970

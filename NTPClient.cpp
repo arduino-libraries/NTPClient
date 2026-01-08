@@ -149,6 +149,21 @@ int NTPClient::getSeconds() const {
   return (this->getEpochTime() % 60);
 }
 
+int NTPClient::getHours12() const {
+  int hours24 = this->getHours();
+  if (hours24 == 0) {
+    return 12; // Midnight is 12 AM
+  } else if (hours24 > 12) {
+    return hours24 - 12; // PM hours
+  } else {
+    return hours24; // AM hours (1-12)
+  }
+}
+
+bool NTPClient::isPM() const {
+  return (this->getHours() >= 12);
+}
+
 String NTPClient::getFormattedTime() const {
   unsigned long rawTime = this->getEpochTime();
   unsigned long hours = (rawTime % 86400L) / 3600;
@@ -161,6 +176,21 @@ String NTPClient::getFormattedTime() const {
   String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
 
   return hoursStr + ":" + minuteStr + ":" + secondStr;
+}
+
+String NTPClient::getFormattedTime12() const {
+  int hours12 = this->getHours12();
+  String hoursStr = hours12 < 10 ? "0" + String(hours12) : String(hours12);
+
+  int minutes = this->getMinutes();
+  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
+
+  int seconds = this->getSeconds();
+  String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
+
+  String period = this->isPM() ? " PM" : " AM";
+
+  return hoursStr + ":" + minuteStr + ":" + secondStr + period;
 }
 
 void NTPClient::end() {
