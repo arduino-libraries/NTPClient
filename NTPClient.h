@@ -4,14 +4,54 @@
 
 #include <Udp.h>
 
+// Optional ESP32 AsyncUDP support.
+// This keeps the existing UDP-based API intact and adds new constructors
+// when AsyncUDP is available.
+#if defined(ARDUINO_ARCH_ESP32)
+  #include <WiFi.h>
+  #include <AsyncUDP.h>
+  #include "freertos/FreeRTOS.h"
+  #include "freertos/portmacro.h"
+  #define NTPCLIENT_HAS_ASYNCUDP 1
+#else
+  #define NTPCLIENT_HAS_ASYNCUDP 0
+#endif
+
 #define SEVENZYYEARS 2208988800UL
 #define NTP_PACKET_SIZE 48
 #define NTP_DEFAULT_LOCAL_PORT 1337
 
 class NTPClient {
   private:
+    enum class Transport : uint8_t {
+      SyncUDP,
+      AsyncUDP,
+    };
+
+    enum class LastError : uint8_t {
+      None,
+      NotBegun,
+      SendFailed,
+      DnsFailed,
+      Timeout,
+      ShortPacket,
+    };
+
+    Transport     _transport     = Transport::SyncUDP;
     UDP*          _udp;
     bool          _udpSetup       = false;
+
+#if NTPCLIENT_HAS_ASYNCUDP
+    AsyncUDP*     _asyncUdp       = nullptr;
+    bool          _asyncListening  = false;
+    volatile bool _asyncRequestInFlight = false;
+    volatile bool _asyncPacketReady     = false;
+    unsigned long _asyncRequestSentAt   = 0;
+    unsigned long _asyncResponseAt      = 0;
+    portMUX_TYPE  _asyncMux = portMUX_INITIALIZER_UNLOCKED;
+#endif
+
+    LastError     _lastError      = LastError::None;
 
     const char*   _poolServerName = "pool.ntp.org"; // Default time server
     IPAddress     _poolServerIP;
@@ -25,7 +65,8 @@ class NTPClient {
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
-    void          sendNTPPacket();
+    bool          sendNTPPacket();
+    bool          processNTPPacket(unsigned long receivedAtMillis);
 
   public:
     NTPClient(UDP& udp);
@@ -36,6 +77,17 @@ class NTPClient {
     NTPClient(UDP& udp, IPAddress poolServerIP);
     NTPClient(UDP& udp, IPAddress poolServerIP, long timeOffset);
     NTPClient(UDP& udp, IPAddress poolServerIP, long timeOffset, unsigned long updateInterval);
+
+  #if NTPCLIENT_HAS_ASYNCUDP
+    NTPClient(AsyncUDP& udp);
+    NTPClient(AsyncUDP& udp, long timeOffset);
+    NTPClient(AsyncUDP& udp, const char* poolServerName);
+    NTPClient(AsyncUDP& udp, const char* poolServerName, long timeOffset);
+    NTPClient(AsyncUDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval);
+    NTPClient(AsyncUDP& udp, IPAddress poolServerIP);
+    NTPClient(AsyncUDP& udp, IPAddress poolServerIP, long timeOffset);
+    NTPClient(AsyncUDP& udp, IPAddress poolServerIP, long timeOffset, unsigned long updateInterval);
+  #endif
 
     /**
      * Set time server name
@@ -80,6 +132,12 @@ class NTPClient {
      * @return true if time has been set, else false
      */
     bool isTimeSet() const;
+
+    /**
+     * Returns the last internal error state (0 means none).
+     * Primarily useful for AsyncUDP integrations and debugging.
+     */
+    uint8_t getLastError() const;
 
     int getDay() const;
     int getHours() const;
