@@ -45,6 +45,7 @@ jobs:
               - examples/Advanced
               - examples/Basic
               - examples/IsTimeSet
+            enable-deltas-report: true
             artifact-name-suffix: esp8266-esp8266-huzzah
 
           - fqbn: esp32:esp32:esp32
@@ -53,6 +54,7 @@ jobs:
                 source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
             sketch-paths: |
               - examples/AsyncUDP
+            enable-deltas-report: false
             artifact-name-suffix: esp32-esp32-esp32
 
     steps:
@@ -71,7 +73,7 @@ jobs:
             # Additional library dependencies can be listed here.
             # See: https://github.com/arduino/compile-sketches#libraries
           sketch-paths: ${{ matrix.board.sketch-paths }}
-          enable-deltas-report: true
+          enable-deltas-report: ${{ matrix.board.enable-deltas-report }}
           sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
 
       - name: Save sketches report as workflow artifact
