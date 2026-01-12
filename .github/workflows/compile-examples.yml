@@ -41,7 +41,19 @@ jobs:
             platforms: |
               - name: esp8266:esp8266
                 source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+            sketch-paths: |
+              - examples/Advanced
+              - examples/Basic
+              - examples/IsTimeSet
             artifact-name-suffix: esp8266-esp8266-huzzah
+
+          - fqbn: esp32:esp32:esp32
+            platforms: |
+              - name: esp32:esp32
+                source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+            sketch-paths: |
+              - examples/AsyncUDP
+            artifact-name-suffix: esp32-esp32-esp32
 
     steps:
       - name: Checkout repository
@@ -58,8 +70,7 @@ jobs:
             - source-path: ./
             # Additional library dependencies can be listed here.
             # See: https://github.com/arduino/compile-sketches#libraries
-          sketch-paths: |
-            - examples
+          sketch-paths: ${{ matrix.board.sketch-paths }}
           enable-deltas-report: true
           sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
 
