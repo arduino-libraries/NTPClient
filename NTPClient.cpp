@@ -130,7 +130,27 @@ bool NTPClient::isTimeSet() const {
   return (this->_lastUpdate != 0); // returns true if the time has been set, else false
 }
 
+bool NTPClient::isTimeValid() const {
+  // First check if time has been set at all
+  if (!isTimeSet()) {
+    return false;
+  }
+  
+  // Then check if the epoch is reasonable (after Jan 1, 2000)
+  // This catches edge cases where time might be "set" but invalid
+  // 946684800 = Jan 1, 2000, 00:00:00 UTC
+  unsigned long epoch = getEpochTime();
+  return (epoch > 946684800);
+}
+
 unsigned long NTPClient::getEpochTime() const {
+  // Return 0 if time has not been synchronized yet
+  // This prevents returning fabricated uptime values (millis()/1000)
+
+  if (this->_lastUpdate == 0) {
+    return 0;
+  }
+  
   return this->_timeOffset + // User offset
          this->_currentEpoc + // Epoch returned by the NTP server
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
