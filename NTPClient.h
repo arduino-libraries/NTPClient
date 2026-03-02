@@ -26,6 +26,7 @@ class NTPClient {
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
     void          sendNTPPacket();
+    bool          isValid(byte * ntpPacket);
 
   public:
     NTPClient(UDP& udp);
