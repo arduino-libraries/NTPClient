@@ -169,7 +169,7 @@ void NTPClient::end() {
   this->_udpSetup = false;
 }
 
-void NTPClient::setTimeOffset(int timeOffset) {
+void NTPClient::setTimeOffset(long timeOffset) {
   this->_timeOffset     = timeOffset;
 }
 
