@@ -81,58 +81,67 @@ void NTPClient::begin(unsigned int port) {
   this->_udpSetup = true;
 }
 
-bool NTPClient::forceUpdate() {
-  #ifdef DEBUG_NTPClient
-    Serial.println("Update from NTP Server");
-  #endif
-
-  // flush any existing packets
-  while(this->_udp->parsePacket() != 0)
-    this->_udp->flush();
-
+bool NTPClient::forceUpdate(unsigned long timeout) {
   this->sendNTPPacket();
 
+  #ifdef DEBUG_NTPClient
+    Serial.println("[NTPClient] Waiting for NTP Server response...");
+  #endif
+
   // Wait till data is there or timeout...
-  byte timeout = 0;
-  int cb = 0;
-  do {
-    delay ( 10 );
-    cb = this->_udp->parsePacket();
-    if (timeout > 100) return false; // timeout after 1000 ms
-    timeout++;
-  } while (cb == 0);
+  if (this->receiveNTPPacket(timeout)) return true;
 
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
-  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
-
-  unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
-  unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
-  // combine the four bytes (two words) into a long integer
-  // this is NTP time (seconds since Jan 1 1900):
-  unsigned long secsSince1900 = highWord << 16 | lowWord;
-
-  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
-
-  return true;  // return true after successful update
+  #ifdef DEBUG_NTPClient
+    Serial.println("[NTPClient] Timeout");
+  #endif
+  return false; // timeout 
 }
 
-bool NTPClient::update() {
-  if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
-    || this->_lastUpdate == 0) {                                // Update if there was no update yet.
-    if (!this->_udpSetup || this->_port != NTP_DEFAULT_LOCAL_PORT) this->begin(this->_port); // setup the UDP client if needed
-    return this->forceUpdate();
+bool NTPClient::needUpdate() {
+  if (this->_sendTime == 0) return true;    // Was never updated before.
+  if (millis() - this->_sendTime >= this->_updateInterval) return true;    // Previous update was more than configured interval ago.
+
+  return false;
+}
+
+bool NTPClient::update(unsigned long timeout) {
+  if (this->needUpdate()) {
+    return this->forceUpdate(timeout);
   }
   return false;   // return false if update does not occur
+}
+
+int NTPClient::asyncUpdate() {
+  if (this->needUpdate()) {
+    this->sendNTPPacket();
+
+    if (_needUpdate) return -1; // return -1 if timeout
+    _needUpdate = true;
+    return 2; // return 2 if update is in progress
+  }
+
+  if (_needUpdate) {
+    if (!this->receiveNTPPacket()) return 2;
+    _needUpdate = false;
+    return 0;
+  }
+
+  return 1;   // return 1 if update does not occur
 }
 
 bool NTPClient::isTimeSet() const {
   return (this->_lastUpdate != 0); // returns true if the time has been set, else false
 }
 
+long long NTPClient::getEpochTimeMillis() const {
+  return (this->_timeOffset + // User offset
+          this->_currentEpoch) * 1000LL + // Epoch returned by the NTP server
+         (millis() - this->_lastUpdate); // Time since last update
+}
+
 unsigned long NTPClient::getEpochTime() const {
   return this->_timeOffset + // User offset
-         this->_currentEpoc + // Epoch returned by the NTP server
+         this->_currentEpoch + // Epoch returned by the NTP server
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
@@ -182,6 +191,13 @@ void NTPClient::setPoolServerName(const char* poolServerName) {
 }
 
 void NTPClient::sendNTPPacket() {
+  if (this->_udpSetup) {
+    // flush any existing packets
+    while(this->_udp->parsePacket() != 0)
+      this->_udp->flush();
+  }
+
+  if (!this->_udpSetup) this->begin(this->_port); // setup the UDP client if needed
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
@@ -204,6 +220,45 @@ void NTPClient::sendNTPPacket() {
   }
   this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
   this->_udp->endPacket();
+  this->_sendTime = millis();
+
+  #ifdef DEBUG_NTPClient
+    Serial.println("[NTPClient] Sent UDP packet");
+  #endif
+}
+
+bool NTPClient::receiveNTPPacket(unsigned long timeout) {
+  int packetSize = this->_udp->parsePacket();
+
+  if (packetSize < NTP_PACKET_SIZE) {
+    if (timeout == 0) return false;
+
+    unsigned long start = millis();
+    while (millis() - start < timeout) {
+      delay(1);
+      packetSize = this->_udp->parsePacket();
+      if (packetSize >= NTP_PACKET_SIZE) break;
+    }
+  }
+
+  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
+
+  unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
+  unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
+  // combine the four bytes (two words) into a long integer
+  // this is NTP time (seconds since Jan 1 1900):
+  unsigned long secsSince1900 = highWord << 16 | lowWord;
+
+  this->_currentEpoch = secsSince1900 - SEVENTY_YEARS;
+  int latency = (millis() - this->_sendTime);
+  this->_lastUpdate = millis() - (latency / 2); // Account for latency in reading the time
+
+  #ifdef DEBUG_NTPClient
+    Serial.print("[NTPClient] Received UDP packet latency: ");
+    Serial.println(latency);
+  #endif
+
+  return true;
 }
 
 void NTPClient::setRandomPort(unsigned int minValue, unsigned int maxValue) {
