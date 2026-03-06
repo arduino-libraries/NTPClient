@@ -50,3 +50,5 @@ void loop() {
 
 ## Function documentation
 `getEpochTime` returns the Unix epoch, which are the seconds elapsed since 00:00:00 UTC on 1 January 1970 (leap seconds are ignored, every day is treated as having 86400 seconds). **Attention**: If you have set a time offset this time offset will be added to your epoch timestamp.
+
+`setEpochTime` sets the Unix epoch internally maintained by the NTPClient library.  The function parameter is the local time converted to number of seconds since 00:00:00 on 1 January 1970 (local time).  Useful when you have a hardware RTC (eg., DS3231) running on local time but uses the NTPClient library for timekeeping.  At start-up, you set the NTPClient time offset and then set the internal NTPClient epoch timestamp using the time you fetch from the hardware RTC.  The `setEpochTime` uses the time offset that you specified to compute the epoch timestamp.
