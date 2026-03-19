@@ -81,6 +81,18 @@ class NTPClient {
      */
     bool isTimeSet() const;
 
+    /**
+     * Checks if the time is both set AND valid (reasonable epoch value).
+     * This is a stronger check than isTimeSet() - it verifies the epoch is
+     * greater than a minimum threshold (Jan 1, 2000) to catch edge cases.
+     *
+     * Recommended for security-sensitive applications that need to ensure
+     * time is not only synchronized but also plausible.
+     *
+     * @return true if time is set and epoch > 946684800 (Jan 1, 2000), else false
+     */
+    bool isTimeValid() const;
+
     int getDay() const;
     int getHours() const;
     int getMinutes() const;
