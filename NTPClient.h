@@ -108,6 +108,10 @@ class NTPClient {
     unsigned long getEpochTime() const;
 
     /**
+     * @return time in seconds since Jan. 1, 1970
+     */
+    unsigned long getUTCEpochTime() const;
+    /**
      * Stops the underlying UDP client
      */
     void end();
