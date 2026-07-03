@@ -81,6 +81,30 @@ void NTPClient::begin(unsigned int port) {
   this->_udpSetup = true;
 }
 
+bool NTPClient::isValid(byte * ntpPacket)
+{
+	//Perform a few validity checks on the packet
+	if((ntpPacket[0] & 0b11000000) == 0b11000000)		//Check for LI=UNSYNC
+		return false;
+		
+	if((ntpPacket[0] & 0b00111000) >> 3 < 0b100)		//Check for Version >= 4
+		return false;
+		
+	if((ntpPacket[0] & 0b00000111) != 0b100)			//Check for Mode == Server
+		return false;
+		
+	if((ntpPacket[1] < 1) || (ntpPacket[1] > 15))		//Check for valid Stratum
+		return false;
+
+	if(	ntpPacket[16] == 0 && ntpPacket[17] == 0 && 
+		ntpPacket[18] == 0 && ntpPacket[19] == 0 &&
+		ntpPacket[20] == 0 && ntpPacket[21] == 0 &&
+		ntpPacket[22] == 0 && ntpPacket[22] == 0)		//Check for ReferenceTimestamp != 0
+		return false;
+
+	return true;
+}
+
 bool NTPClient::forceUpdate() {
   #ifdef DEBUG_NTPClient
     Serial.println("Update from NTP Server");
@@ -98,13 +122,19 @@ bool NTPClient::forceUpdate() {
   do {
     delay ( 10 );
     cb = this->_udp->parsePacket();
+    
+    if(cb > 0)
+    {
+      this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
+      if(!this->isValid(this->_packetBuffer))
+        cb = 0;
+    }
+    
     if (timeout > 100) return false; // timeout after 1000 ms
     timeout++;
   } while (cb == 0);
 
   this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
-  this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
 
   unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
   unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
