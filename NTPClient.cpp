@@ -126,8 +126,45 @@ bool NTPClient::update() {
   return false;   // return false if update does not occur
 }
 
+int NTPClient::asyncUpdate() {
+  if ((millis() - this->_sendTime >= this->_updateInterval)     // Update after _updateInterval
+    || this->_sendTime == 0) {                                // Update if there was no update yet.
+    _sendTime = millis();
+    if (!this->_udpSetup || this->_port != NTP_DEFAULT_LOCAL_PORT) this->begin(this->_port); // setup the UDP client if needed
+    this->sendNTPPacket();
+
+    int code = 2;
+    if (_needUpdate) code = -1; // timeout
+    _needUpdate = true;
+    return code;
+  }
+
+  if (_needUpdate) {
+    int cb = this->_udp->parsePacket();
+    if (cb == 0) return 2;
+    this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
+
+    unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
+    unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
+    // combine the four bytes (two words) into a long integer
+    // this is NTP time (seconds since Jan 1 1900):
+    unsigned long secsSince1900 = highWord << 16 | lowWord;
+
+    this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+    this->_lastUpdate = millis();
+    _needUpdate = false;
+    return 0;
+  }
+
+  return 1;   // return false if update does not occur
+}
+
 bool NTPClient::isTimeSet() const {
   return (this->_lastUpdate != 0); // returns true if the time has been set, else false
+}
+
+long long NTPClient::getEpochTimeMillis() const {
+  return this->_currentEpoc * 1000LL + millis() - this->_lastUpdate;
 }
 
 unsigned long NTPClient::getEpochTime() const {
