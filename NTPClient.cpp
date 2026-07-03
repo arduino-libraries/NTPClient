@@ -98,11 +98,15 @@ bool NTPClient::forceUpdate() {
   do {
     delay ( 10 );
     cb = this->_udp->parsePacket();
-    if (timeout > 100) return false; // timeout after 1000 ms
+    if (timeout > 100) {
+      this->_lastUpdateOk = false;
+      return false; // timeout after 1000 ms
+    }
     timeout++;
   } while (cb == 0);
 
   this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
+  this->_lastUpdateOk = true;
 
   this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
 
@@ -123,7 +127,7 @@ bool NTPClient::update() {
     if (!this->_udpSetup || this->_port != NTP_DEFAULT_LOCAL_PORT) this->begin(this->_port); // setup the UDP client if needed
     return this->forceUpdate();
   }
-  return false;   // return false if update does not occur
+  return this->_lastUpdateOk;   // return last sync state
 }
 
 bool NTPClient::isTimeSet() const {
@@ -178,7 +182,12 @@ void NTPClient::setUpdateInterval(unsigned long updateInterval) {
 }
 
 void NTPClient::setPoolServerName(const char* poolServerName) {
-    this->_poolServerName = poolServerName;
+  this->_poolServerName = poolServerName;
+}
+
+void NTPClient::setPoolServerIP(IPAddress poolServerIP) {
+  this->_poolServerName = NULL;
+  this->_poolServerIP = poolServerIP;
 }
 
 void NTPClient::sendNTPPacket() {
