@@ -3,10 +3,20 @@
 #include "Arduino.h"
 
 #include <Udp.h>
+#include <time.h>
 
 #define SEVENZYYEARS 2208988800UL
 #define NTP_PACKET_SIZE 48
 #define NTP_DEFAULT_LOCAL_PORT 1337
+
+struct DateTime {
+  int dt_seconds;
+  int dt_minutes;
+  int dt_hours;
+  int dt_date;
+  int dt_month;
+  int dt_year;
+};
 
 class NTPClient {
   private:
@@ -86,6 +96,17 @@ class NTPClient {
     int getMinutes() const;
     int getSeconds() const;
 
+    /**
+     * Get date time as a struct which contains
+     * Year, Month, Date, Hours, Minutes, Seconds
+     */
+    DateTime getDateTime() const;
+
+    /**
+     * Return the date time as a String with the given format (Ex: %Y/%m/%d %H:%M:%S)
+     */
+    String getFormattedDateTime(const char* dateTimeFormat) const;
+    
     /**
      * Changes the time offset. Useful for changing timezones dynamically
      */
