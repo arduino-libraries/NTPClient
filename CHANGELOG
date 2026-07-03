@@ -1,3 +1,5 @@
+* Added function to get dayof month - 2020.10.07
+
 NTPClient 3.1.0 - 2016.05.31
 
 * Added functions for changing the timeOffset and updateInterval later. Thanks @SirUli
