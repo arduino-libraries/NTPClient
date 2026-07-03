@@ -10,8 +10,8 @@
 
 class NTPClient {
   private:
+
     UDP*          _udp;
-    bool          _udpSetup       = false;
 
     const char*   _poolServerName = "pool.ntp.org"; // Default time server
     IPAddress     _poolServerIP;
@@ -22,6 +22,14 @@ class NTPClient {
 
     unsigned long _currentEpoc    = 0;      // In s
     unsigned long _lastUpdate     = 0;      // In ms
+    unsigned long _lastRequest    = 0;      // In ms
+
+    enum class State {
+        uninitialized,
+        idle,
+        send_request,
+        wait_response,
+    } _state = State::uninitialized;
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
