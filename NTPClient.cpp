@@ -21,30 +21,37 @@
 
 #include "NTPClient.h"
 
+static const unsigned long NTP_DEFAULT_TIMEOUT_MS = 1000;
+
 NTPClient::NTPClient(UDP& udp) {
   this->_udp            = &udp;
+  this->_transport      = Transport::SyncUDP;
 }
 
 NTPClient::NTPClient(UDP& udp, long timeOffset) {
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
+  this->_transport      = Transport::SyncUDP;
 }
 
 NTPClient::NTPClient(UDP& udp, const char* poolServerName) {
   this->_udp            = &udp;
   this->_poolServerName = poolServerName;
+  this->_transport      = Transport::SyncUDP;
 }
 
 NTPClient::NTPClient(UDP& udp, IPAddress poolServerIP) {
   this->_udp            = &udp;
   this->_poolServerIP   = poolServerIP;
   this->_poolServerName = NULL;
+  this->_transport      = Transport::SyncUDP;
 }
 
 NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset) {
   this->_udp            = &udp;
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
+  this->_transport      = Transport::SyncUDP;
 }
 
 NTPClient::NTPClient(UDP& udp, IPAddress poolServerIP, long timeOffset){
@@ -52,6 +59,7 @@ NTPClient::NTPClient(UDP& udp, IPAddress poolServerIP, long timeOffset){
   this->_timeOffset     = timeOffset;
   this->_poolServerIP   = poolServerIP;
   this->_poolServerName = NULL;
+  this->_transport      = Transport::SyncUDP;
 }
 
 NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval) {
@@ -59,6 +67,7 @@ NTPClient::NTPClient(UDP& udp, const char* poolServerName, long timeOffset, unsi
   this->_timeOffset     = timeOffset;
   this->_poolServerName = poolServerName;
   this->_updateInterval = updateInterval;
+  this->_transport      = Transport::SyncUDP;
 }
 
 NTPClient::NTPClient(UDP& udp, IPAddress poolServerIP, long timeOffset, unsigned long updateInterval) {
@@ -67,7 +76,66 @@ NTPClient::NTPClient(UDP& udp, IPAddress poolServerIP, long timeOffset, unsigned
   this->_poolServerIP   = poolServerIP;
   this->_poolServerName = NULL;
   this->_updateInterval = updateInterval;
+  this->_transport      = Transport::SyncUDP;
 }
+
+#if NTPCLIENT_HAS_ASYNCUDP
+NTPClient::NTPClient(AsyncUDP& udp) {
+  this->_transport = Transport::AsyncUDP;
+  this->_asyncUdp  = &udp;
+}
+
+NTPClient::NTPClient(AsyncUDP& udp, long timeOffset) {
+  this->_transport  = Transport::AsyncUDP;
+  this->_asyncUdp   = &udp;
+  this->_timeOffset = timeOffset;
+}
+
+NTPClient::NTPClient(AsyncUDP& udp, const char* poolServerName) {
+  this->_transport      = Transport::AsyncUDP;
+  this->_asyncUdp       = &udp;
+  this->_poolServerName = poolServerName;
+}
+
+NTPClient::NTPClient(AsyncUDP& udp, IPAddress poolServerIP) {
+  this->_transport      = Transport::AsyncUDP;
+  this->_asyncUdp       = &udp;
+  this->_poolServerIP   = poolServerIP;
+  this->_poolServerName = NULL;
+}
+
+NTPClient::NTPClient(AsyncUDP& udp, const char* poolServerName, long timeOffset) {
+  this->_transport      = Transport::AsyncUDP;
+  this->_asyncUdp       = &udp;
+  this->_timeOffset     = timeOffset;
+  this->_poolServerName = poolServerName;
+}
+
+NTPClient::NTPClient(AsyncUDP& udp, IPAddress poolServerIP, long timeOffset){
+  this->_transport      = Transport::AsyncUDP;
+  this->_asyncUdp       = &udp;
+  this->_timeOffset     = timeOffset;
+  this->_poolServerIP   = poolServerIP;
+  this->_poolServerName = NULL;
+}
+
+NTPClient::NTPClient(AsyncUDP& udp, const char* poolServerName, long timeOffset, unsigned long updateInterval) {
+  this->_transport      = Transport::AsyncUDP;
+  this->_asyncUdp       = &udp;
+  this->_timeOffset     = timeOffset;
+  this->_poolServerName = poolServerName;
+  this->_updateInterval = updateInterval;
+}
+
+NTPClient::NTPClient(AsyncUDP& udp, IPAddress poolServerIP, long timeOffset, unsigned long updateInterval) {
+  this->_transport      = Transport::AsyncUDP;
+  this->_asyncUdp       = &udp;
+  this->_timeOffset     = timeOffset;
+  this->_poolServerIP   = poolServerIP;
+  this->_poolServerName = NULL;
+  this->_updateInterval = updateInterval;
+}
+#endif
 
 void NTPClient::begin() {
   this->begin(NTP_DEFAULT_LOCAL_PORT);
@@ -76,8 +144,42 @@ void NTPClient::begin() {
 void NTPClient::begin(unsigned int port) {
   this->_port = port;
 
-  this->_udp->begin(this->_port);
+  this->_lastError = LastError::None;
 
+#if NTPCLIENT_HAS_ASYNCUDP
+  if (this->_transport == Transport::AsyncUDP) {
+    if (this->_asyncUdp == nullptr) {
+      this->_lastError = LastError::NotBegun;
+      return;
+    }
+
+    // Bind to local port once and register callback.
+    if (!this->_asyncListening) {
+      if (!this->_asyncUdp->listen(this->_port)) {
+        this->_lastError = LastError::NotBegun;
+        return;
+      }
+      this->_asyncUdp->onPacket([this](AsyncUDPPacket packet) {
+        if (packet.length() < NTP_PACKET_SIZE) {
+          this->_lastError = LastError::ShortPacket;
+          return;
+        }
+        portENTER_CRITICAL(&this->_asyncMux);
+        memcpy(this->_packetBuffer, packet.data(), NTP_PACKET_SIZE);
+        this->_asyncResponseAt = millis();
+        this->_asyncPacketReady = true;
+        this->_asyncRequestInFlight = false;
+        portEXIT_CRITICAL(&this->_asyncMux);
+      });
+      this->_asyncListening = true;
+    }
+
+    this->_udpSetup = true;
+    return;
+  }
+#endif
+
+  this->_udp->begin(this->_port);
   this->_udpSetup = true;
 }
 
@@ -86,11 +188,47 @@ bool NTPClient::forceUpdate() {
     Serial.println("Update from NTP Server");
   #endif
 
+  this->_lastError = LastError::None;
+
+#if NTPCLIENT_HAS_ASYNCUDP
+  if (this->_transport == Transport::AsyncUDP) {
+    if (!this->_udpSetup) {
+      this->begin(this->_port);
+      if (!this->_udpSetup) return false;
+    }
+
+    // Consume ready packet (if any)
+    if (this->_asyncPacketReady) {
+      unsigned long receivedAt = 0;
+      portENTER_CRITICAL(&this->_asyncMux);
+      receivedAt = this->_asyncResponseAt;
+      this->_asyncPacketReady = false;
+      portEXIT_CRITICAL(&this->_asyncMux);
+      return this->processNTPPacket(receivedAt);
+    }
+
+    // Timeout check
+    if (this->_asyncRequestInFlight && (millis() - this->_asyncRequestSentAt > NTP_DEFAULT_TIMEOUT_MS)) {
+      this->_asyncRequestInFlight = false;
+      this->_lastError = LastError::Timeout;
+      return false;
+    }
+
+    // Trigger request if none in-flight
+    if (!this->_asyncRequestInFlight) {
+      if (!this->sendNTPPacket()) return false;
+    }
+
+    // Non-blocking: response will be handled on a future call.
+    return false;
+  }
+#endif
+
   // flush any existing packets
   while(this->_udp->parsePacket() != 0)
     this->_udp->flush();
 
-  this->sendNTPPacket();
+  if (!this->sendNTPPacket()) return false;
 
   // Wait till data is there or timeout...
   byte timeout = 0;
@@ -106,24 +244,32 @@ bool NTPClient::forceUpdate() {
 
   this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
 
-  unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
-  unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
-  // combine the four bytes (two words) into a long integer
-  // this is NTP time (seconds since Jan 1 1900):
-  unsigned long secsSince1900 = highWord << 16 | lowWord;
-
-  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
-
-  return true;  // return true after successful update
+  return this->processNTPPacket(this->_lastUpdate);
 }
 
 bool NTPClient::update() {
-  if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
-    || this->_lastUpdate == 0) {                                // Update if there was no update yet.
-    if (!this->_udpSetup || this->_port != NTP_DEFAULT_LOCAL_PORT) this->begin(this->_port); // setup the UDP client if needed
+#if NTPCLIENT_HAS_ASYNCUDP
+  if (this->_transport == Transport::AsyncUDP) {
+    // Always allow consuming a received packet, even if we're not "due".
+    if (this->_asyncPacketReady) {
+      return this->forceUpdate();
+    }
+
+    // Trigger a new request only when due.
+    if ((millis() - this->_lastUpdate >= this->_updateInterval) || this->_lastUpdate == 0) {
+      if (!this->_udpSetup) this->begin(this->_port);
+      // Non-blocking forceUpdate() will send and return.
+      (void)this->forceUpdate();
+    }
+    return false;
+  }
+#endif
+
+  if ((millis() - this->_lastUpdate >= this->_updateInterval) || this->_lastUpdate == 0) {
+    if (!this->_udpSetup || this->_port != NTP_DEFAULT_LOCAL_PORT) this->begin(this->_port);
     return this->forceUpdate();
   }
-  return false;   // return false if update does not occur
+  return false;
 }
 
 bool NTPClient::isTimeSet() const {
@@ -164,8 +310,20 @@ String NTPClient::getFormattedTime() const {
 }
 
 void NTPClient::end() {
-  this->_udp->stop();
+#if NTPCLIENT_HAS_ASYNCUDP
+  if (this->_transport == Transport::AsyncUDP) {
+    if (this->_asyncUdp != nullptr) {
+      this->_asyncUdp->close();
+    }
+    this->_asyncListening = false;
+    this->_asyncRequestInFlight = false;
+    this->_asyncPacketReady = false;
+    this->_udpSetup = false;
+    return;
+  }
+#endif
 
+  this->_udp->stop();
   this->_udpSetup = false;
 }
 
@@ -181,7 +339,7 @@ void NTPClient::setPoolServerName(const char* poolServerName) {
     this->_poolServerName = poolServerName;
 }
 
-void NTPClient::sendNTPPacket() {
+bool NTPClient::sendNTPPacket() {
   // set all bytes in the buffer to 0
   memset(this->_packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
@@ -195,18 +353,84 @@ void NTPClient::sendNTPPacket() {
   this->_packetBuffer[14]  = 49;
   this->_packetBuffer[15]  = 52;
 
-  // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp:
-  if  (this->_poolServerName) {
-    this->_udp->beginPacket(this->_poolServerName, 123);
-  } else {
-    this->_udp->beginPacket(this->_poolServerIP, 123);
+#if NTPCLIENT_HAS_ASYNCUDP
+  if (this->_transport == Transport::AsyncUDP) {
+    if (this->_asyncUdp == nullptr) {
+      this->_lastError = LastError::NotBegun;
+      return false;
+    }
+
+    IPAddress target;
+    if (this->_poolServerName) {
+      if (this->_poolServerIP == IPAddress()) {
+        if (!WiFi.hostByName(this->_poolServerName, this->_poolServerIP)) {
+          this->_lastError = LastError::DnsFailed;
+          return false;
+        }
+      }
+      target = this->_poolServerIP;
+    } else {
+      target = this->_poolServerIP;
+    }
+
+    portENTER_CRITICAL(&this->_asyncMux);
+    this->_asyncPacketReady = false;
+    this->_asyncRequestInFlight = true;
+    this->_asyncRequestSentAt = millis();
+    portEXIT_CRITICAL(&this->_asyncMux);
+
+    size_t written = this->_asyncUdp->writeTo(this->_packetBuffer, NTP_PACKET_SIZE, target, 123);
+    if (written != NTP_PACKET_SIZE) {
+      this->_asyncRequestInFlight = false;
+      this->_lastError = LastError::SendFailed;
+      return false;
+    }
+    return true;
   }
-  this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
-  this->_udp->endPacket();
+#endif
+
+  // Sync UDP transport
+  int ok = 0;
+  if (this->_poolServerName) {
+    ok = this->_udp->beginPacket(this->_poolServerName, 123);
+  } else {
+    ok = this->_udp->beginPacket(this->_poolServerIP, 123);
+  }
+  if (ok == 0) {
+    this->_lastError = LastError::SendFailed;
+    return false;
+  }
+
+  size_t written = this->_udp->write(this->_packetBuffer, NTP_PACKET_SIZE);
+  if (written != NTP_PACKET_SIZE) {
+    this->_lastError = LastError::SendFailed;
+    (void)this->_udp->endPacket();
+    return false;
+  }
+
+  ok = this->_udp->endPacket();
+  if (ok == 0) {
+    this->_lastError = LastError::SendFailed;
+    return false;
+  }
+
+  return true;
 }
 
 void NTPClient::setRandomPort(unsigned int minValue, unsigned int maxValue) {
   randomSeed(analogRead(0));
   this->_port = random(minValue, maxValue);
+}
+
+bool NTPClient::processNTPPacket(unsigned long receivedAtMillis) {
+  unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
+  unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
+  unsigned long secsSince1900 = (highWord << 16) | lowWord;
+  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+  this->_lastUpdate = receivedAtMillis;
+  return true;
+}
+
+uint8_t NTPClient::getLastError() const {
+  return static_cast<uint8_t>(this->_lastError);
 }
