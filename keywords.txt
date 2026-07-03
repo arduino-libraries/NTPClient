@@ -22,3 +22,5 @@ getEpochTime	KEYWORD2
 setTimeOffset	KEYWORD2
 setUpdateInterval	KEYWORD2
 setPoolServerName	KEYWORD2
+startUpdate	KEYWORD2
+finishUpdate	KEYWORD2

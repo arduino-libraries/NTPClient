@@ -81,7 +81,7 @@ void NTPClient::begin(unsigned int port) {
   this->_udpSetup = true;
 }
 
-bool NTPClient::forceUpdate() {
+void NTPClient::startUpdate() {
   #ifdef DEBUG_NTPClient
     Serial.println("Update from NTP Server");
   #endif
@@ -91,19 +91,15 @@ bool NTPClient::forceUpdate() {
     this->_udp->flush();
 
   this->sendNTPPacket();
+}
 
-  // Wait till data is there or timeout...
-  byte timeout = 0;
-  int cb = 0;
-  do {
-    delay ( 10 );
-    cb = this->_udp->parsePacket();
-    if (timeout > 100) return false; // timeout after 1000 ms
-    timeout++;
-  } while (cb == 0);
+bool NTPClient::finishUpdate() {
+  #ifdef DEBUG_NTPClient
+    Serial.println("Check response from NTP Server");
+  #endif
 
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
-
+  if(!this->_udp->parsePacket()) return false;
+  this->_lastUpdate = millis();
   this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
 
   unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
@@ -114,6 +110,24 @@ bool NTPClient::forceUpdate() {
 
   this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
 
+  return true;  // return true after successful update
+
+}
+
+bool NTPClient::forceUpdate() {
+  this->startUpdate();
+
+  // Wait till data is there or timeout...
+  byte timeout = 0;
+  bool cb = false;
+  do {
+    delay ( 10 );
+    cb = this->finishUpdate();
+    if (timeout > 100) return false; // timeout after 1000 ms
+    timeout++;
+  } while (!cb);
+
+  this->_lastUpdate -= (10 * (timeout + 1)); // Account for delay in reading the time
   return true;  // return true after successful update
 }
 

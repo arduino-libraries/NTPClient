@@ -68,6 +68,18 @@ class NTPClient {
     bool update();
 
     /**
+     * This will send the initial packet to NTP Server.
+     */
+    void startUpdate();
+
+    /**
+     * This will check the response from NTP Server after the initial packet was sent.
+     *
+     * @return true if packet is received and time is updated, false if no packet received yet
+     */
+    bool finishUpdate();
+
+    /**
      * This will force the update from the NTP Server.
      *
      * @return true on success, false on failure

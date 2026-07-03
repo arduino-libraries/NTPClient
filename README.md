@@ -50,3 +50,8 @@ void loop() {
 
 ## Function documentation
 `getEpochTime` returns the Unix epoch, which are the seconds elapsed since 00:00:00 UTC on 1 January 1970 (leap seconds are ignored, every day is treated as having 86400 seconds). **Attention**: If you have set a time offset this time offset will be added to your epoch timestamp.
+
+To work asynchronously, use `startUpdate` and `finishUpdate` methods instead of `forceUpdate` (or `update`).
+First, call `startUpdate` after network connection is established; then, keep calling `finishUpdate` time to time, unless it returns `true` (that same moment `isTimeSet` starts returning `true` too).
+This way you may perform any work while waiting for a response from the time server.
+**Note**: `startUpdate` may still block for several seconds performing DNS query; to avoid this, first resolve the NTP server's IP address, and then use it instead of its DNS name.
