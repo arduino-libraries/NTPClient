@@ -21,6 +21,27 @@
 
 #include "NTPClient.h"
 
+const NTPClient::DateLanguageData NTPClient::EnglishData = {
+    {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"},
+    {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"},
+    {"Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"},
+    {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}
+};
+
+const NTPClient::DateLanguageData NTPClient::SpanishData = {
+    {"Dom", "Lun", "Mart", "Miérc", "Juev", "Vier", "Sáb"},
+    {"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"},
+    {"ene", "feb", "mar", "abr", "mayo", "jun", "jul", "ago", "sept", "oct", "nov", "dic"},
+    {"enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"}
+};
+
+const NTPClient::DateLanguageData NTPClient::PortugueseData = {
+    {"Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"},
+    {"Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"},
+    {"jan", "fev", "mar", "abr", "maio", "jun", "jul", "ago", "set", "out", "nov", "dez"},
+    {"janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"}
+};
+
 NTPClient::NTPClient(UDP& udp) {
   this->_udp            = &udp;
 }
@@ -126,6 +147,16 @@ bool NTPClient::update() {
   return false;   // return false if update does not occur
 }
 
+// Function to find language data by code
+const NTPClient::DateLanguageData* NTPClient::findLanguageData(const String& code) const {
+    for (int i = 0; i < languageMapSize; ++i) {
+        if (code == languageMap[i].code) {
+            return languageMap[i].data;
+        }
+    }
+    return &EnglishData; // Default to English if not found
+}
+
 bool NTPClient::isTimeSet() const {
   return (this->_lastUpdate != 0); // returns true if the time has been set, else false
 }
@@ -136,31 +167,112 @@ unsigned long NTPClient::getEpochTime() const {
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
-int NTPClient::getDay() const {
-  return (((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
+NTPClient::FullDateComponents NTPClient::calculateFullDateComponents() const {
+    unsigned long epochTime = this->getEpochTime();
+    long days = epochTime / 86400L; // Total days since epoch
+    int year = 1970;
+
+    while (days > 365) {
+        if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+            if (days >= 366) {
+                days -= 366;
+                year++;
+            } else {
+                break; // Leap year but not enough days to complete the year
+            }
+        } else {
+            days -= 365;
+            year++;
+        }
+    }
+
+    int dayOfYear = static_cast<int>(days) + 1; // +1 to convert from 0-based to 1-based
+    bool thisYearIsLeap = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+    int daysInMonth[12] = {31, 28 + thisYearIsLeap, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    int month = 0;
+    for (month = 0; month < 12; month++) {
+        if (dayOfYear <= daysInMonth[month]) {
+            break; // Found the current month
+        }
+        dayOfYear -= daysInMonth[month];
+    }
+
+    return {year, month + 1, dayOfYear}; // Month is 1-based
 }
+
+int NTPClient::getYear() const {
+    FullDateComponents dateComponents = calculateFullDateComponents();
+    return dateComponents.year;
+}
+
+int NTPClient::getMonth() const {
+    FullDateComponents dateComponents = calculateFullDateComponents();
+    return dateComponents.month;
+}
+
+int NTPClient::getDay() const {
+    FullDateComponents dateComponents = calculateFullDateComponents();
+    return dateComponents.day;
+}
+
+int NTPClient::getDayOfWeek() const {
+  return (((this->getEpochTime()  / 86400L) + 4 ) % 7); // 0 is Sunday
+}
+
 int NTPClient::getHours() const {
   return ((this->getEpochTime()  % 86400L) / 3600);
 }
+
 int NTPClient::getMinutes() const {
   return ((this->getEpochTime() % 3600) / 60);
 }
+
 int NTPClient::getSeconds() const {
   return (this->getEpochTime() % 60);
 }
 
-String NTPClient::getFormattedTime() const {
-  unsigned long rawTime = this->getEpochTime();
-  unsigned long hours = (rawTime % 86400L) / 3600;
-  String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
+String NTPClient::getFormattedDateTime(const String& format) {
+    String result;
+    bool escape = false;
 
-  unsigned long minutes = (rawTime % 3600) / 60;
-  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
+    const DateLanguageData* langData = findLanguageData(this->_dateLanguage);
 
-  unsigned long seconds = rawTime % 60;
-  String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
+    for (char c : format) {
+        if (c == '%') {
+            if (escape) {
+                result += c; // Literal '%' character
+                escape = false;
+            } else {
+                escape = true;
+            }
+            continue;
+        }
 
-  return hoursStr + ":" + minuteStr + ":" + secondStr;
+        if (escape) {
+            switch (c) {
+                case 'Y': result += String(this->getYear()); break;
+                case 'y': result += String(this->getYear()).substring(2); break;
+                case 'm': result += (this->getMonth() < 10 ? "0" : "") + String(this->getMonth()); break;
+                case 'd': result += (this->getDay() < 10 ? "0" : "") + String(this->getDay()); break;
+                case 'H': result += (this->getHours() < 10 ? "0" : "") + String(this->getHours()); break;
+                case 'M': result += (this->getMinutes() < 10 ? "0" : "") + String(this->getMinutes()); break;
+                case 'S': result += (this->getSeconds() < 10 ? "0" : "") + String(this->getSeconds()); break;
+                case 'a': result += langData->shortWeekDays[this->getDayOfWeek()]; break;
+                case 'A': result += langData->longWeekDays[this->getDayOfWeek()]; break;
+                case 'w': result += String(this->getDayOfWeek()); break;
+                case 'b': result += langData->shortMonths[this->getMonth() - 1]; break;
+                case 'B': result += langData->longMonths[this->getMonth() - 1]; break;
+                case 'p': result += (this->getHours() < 12 ? "AM" : "PM"); break; // Note: Consider locale for AM/PM
+                default: result += "%" + String(c); // Unsupported format code
+            }
+            escape = false;
+        } else {
+            result += c;
+        }
+    }
+
+    return result;
 }
 
 void NTPClient::end() {
@@ -170,15 +282,19 @@ void NTPClient::end() {
 }
 
 void NTPClient::setTimeOffset(int timeOffset) {
-  this->_timeOffset     = timeOffset;
+  this->_timeOffset = timeOffset;
 }
 
 void NTPClient::setUpdateInterval(unsigned long updateInterval) {
   this->_updateInterval = updateInterval;
 }
 
+void NTPClient::setDateLanguage(const String &dateLanguage) {
+  this->_dateLanguage = dateLanguage;
+}
+
 void NTPClient::setPoolServerName(const char* poolServerName) {
-    this->_poolServerName = poolServerName;
+  this->_poolServerName = poolServerName;
 }
 
 void NTPClient::sendNTPPacket() {
