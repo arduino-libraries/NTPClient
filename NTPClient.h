@@ -89,7 +89,7 @@ class NTPClient {
     /**
      * Changes the time offset. Useful for changing timezones dynamically
      */
-    void setTimeOffset(int timeOffset);
+    void setTimeOffset(long timeOffset);
 
     /**
      * Set the update interval to another frequency. E.g. useful when the
