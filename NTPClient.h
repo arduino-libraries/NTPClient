@@ -7,6 +7,7 @@
 #define SEVENZYYEARS 2208988800UL
 #define NTP_PACKET_SIZE 48
 #define NTP_DEFAULT_LOCAL_PORT 1337
+#define DEBUG_NTPClient
 
 class NTPClient {
   private:
@@ -21,7 +22,11 @@ class NTPClient {
     unsigned long _updateInterval = 60000;  // In ms
 
     unsigned long _currentEpoc    = 0;      // In s
-    unsigned long _lastUpdate     = 0;      // In ms
+    float         _current_epoc_dec = 0;    // In s, decimal part of current epoc
+    uint32_t      _lastUpdate     = 0xff000000;// In ms
+
+    uint16_t      _ntp_timeout    = 1000;    // In ms
+    uint32_t      _last_fail      = 0xffff0000; // In ms
 
     byte          _packetBuffer[NTP_PACKET_SIZE];
 
@@ -50,6 +55,20 @@ class NTPClient {
     void setRandomPort(unsigned int minValue = 49152, unsigned int maxValue = 65535);
 
     /**
+     * clear time server and set ip
+     *
+     * @param ServerIP
+     */
+    void setPoolServerIP(IPAddress server_ip);
+
+    /**
+     * Set ntp timeout (recommendation < 1000ms)
+     *
+     * @param t_ms
+     */
+    void setTimeout(uint16_t t_ms);
+
+    /**
      * Starts the underlying UDP client with the default local port
      */
     void begin();
@@ -63,9 +82,12 @@ class NTPClient {
      * This should be called in the main loop of your application. By default an update from the NTP Server is only
      * made every 60 seconds. This can be configured in the NTPClient constructor.
      *
-     * @return true on success, false on failure
+     * @return 1(true) on updated and success
+     *         0(false) on updated and failure
+     *         2 on not time to update
+     *         3 on it's time to update but last failed was just happen, so it decided to wait more
      */
-    bool update();
+    int8_t update();
 
     /**
      * This will force the update from the NTP Server.
@@ -106,6 +128,11 @@ class NTPClient {
      * @return time in seconds since Jan. 1, 1970
      */
     unsigned long getEpochTime() const;
+
+    /**
+     * @return ms of this second, in ms
+     */
+    float get_millis() const;
 
     /**
      * Stops the underlying UDP client

@@ -90,40 +90,108 @@ bool NTPClient::forceUpdate() {
   while(this->_udp->parsePacket() != 0)
     this->_udp->flush();
 
+  uint32_t tik,tok; //tik,tok to record wait time
   this->sendNTPPacket();
+  tik=millis();
+  #ifdef DEBUG_NTPClient
+    Serial.println("Sent ntp packet");
+  #endif
 
   // Wait till data is there or timeout...
-  byte timeout = 0;
-  int cb = 0;
+  uint16_t cb = 0;
   do {
-    delay ( 10 );
+    delay (1); //poll more frequently to get high accuarcy
     cb = this->_udp->parsePacket();
-    if (timeout > 100) return false; // timeout after 1000 ms
-    timeout++;
+    if ((millis()-tik)>this->_ntp_timeout){
+      this->_last_fail=millis();
+      return false;
+    }
   } while (cb == 0);
-
-  this->_lastUpdate = millis() - (10 * (timeout + 1)); // Account for delay in reading the time
+  tok=millis();
+  #ifdef DEBUG_NTPClient
+    Serial.println("got ntp packet.");
+    Serial.print("tik, tok, (tok-tik)/2: ");
+    Serial.print(tik);Serial.print(", ");
+    Serial.print(tok);Serial.print(", ");
+    Serial.println((tok-tik)/2.0);
+  #endif
 
   this->_udp->read(this->_packetBuffer, NTP_PACKET_SIZE);
-
-  unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
-  unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
+  uint32_t high_word,low_word;
+  uint32_t receive_int,transmit_int; //integer part
   // combine the four bytes (two words) into a long integer
   // this is NTP time (seconds since Jan 1 1900):
-  unsigned long secsSince1900 = highWord << 16 | lowWord;
+  high_word=word(this->_packetBuffer[32],this->_packetBuffer[33]);
+  low_word=word(this->_packetBuffer[34],this->_packetBuffer[35]);
+  receive_int=(high_word<<16) | low_word;
+  high_word=word(this->_packetBuffer[40],this->_packetBuffer[41]);
+  low_word=word(this->_packetBuffer[42],this->_packetBuffer[43]);
+  transmit_int=(high_word<<16) | low_word;
+  #ifdef DEBUG_NTPClient
+    Serial.print("receive_int, transmit_int: ");
+    Serial.print(receive_int);Serial.print(", ");
+    Serial.println(transmit_int);
+  #endif
 
-  this->_currentEpoc = secsSince1900 - SEVENZYYEARS;
+  float receive_dec=0,transmit_dec=0; //decimal part
+  high_word=word(this->_packetBuffer[36],this->_packetBuffer[37]);
+  receive_dec=high_word/65536.0;
+  #ifdef DEBUG_NTPClient
+    Serial.print("receive_dec, transmit_dec: ");
+    Serial.print(high_word,HEX);Serial.print(", ");
+    Serial.print(receive_dec,6);Serial.print(", ");
+  #endif
+  high_word=word(this->_packetBuffer[44],this->_packetBuffer[45]);
+  transmit_dec=high_word/65536.0;
+  #ifdef DEBUG_NTPClient
+    Serial.print(high_word,HEX);Serial.print(", ");
+    Serial.println(transmit_dec,6);
+  #endif
+
+  float ping_delay;
+  ping_delay=(tok-tik)/1000.0-(transmit_int-receive_int)-(transmit_dec-receive_dec);
+  ping_delay/=2.0;
+  if(ping_delay<=0){
+    Serial.println("ERROR: ping_delay < 0.0!");
+  }
+
+  this->_lastUpdate=tok;
+  this->_currentEpoc=transmit_int - SEVENZYYEARS ;
+  this->_current_epoc_dec=ping_delay+transmit_dec;
+  if(this->_current_epoc_dec>1){
+    this->_currentEpoc+=(int)this->_current_epoc_dec;
+    this->_current_epoc_dec-=(int)this->_current_epoc_dec;
+  }
+
+  #ifdef DEBUG_NTPClient
+    Serial.print("current Epoc: ");
+    Serial.print(this->_currentEpoc);Serial.print(" ");
+    Serial.println(this->_current_epoc_dec,6);
+  #endif
 
   return true;  // return true after successful update
 }
 
-bool NTPClient::update() {
-  if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
-    || this->_lastUpdate == 0) {                                // Update if there was no update yet.
-    if (!this->_udpSetup || this->_port != NTP_DEFAULT_LOCAL_PORT) this->begin(this->_port); // setup the UDP client if needed
-    return this->forceUpdate();
+int8_t NTPClient::update() {
+  uint32_t now=millis();
+  if(now>=this->_lastUpdate){ //if not overflow
+      if(now-this->_lastUpdate>=this->_updateInterval){
+          if(now-this->_last_fail >= 1500){
+              return this->forceUpdate();
+          }else{
+              return 3; //return 3 if last failed was just happen
+          }
+      }
+  }else{ //if overflowed
+      if(now+0xffffffff-this->_lastUpdate >= this->_updateInterval){
+          if(now+0xffffffff-this->_last_fail >= 1500){
+              return this->forceUpdate();
+          }else{
+              return 3;
+          }
+      }
   }
-  return false;   // return false if update does not occur
+  return 2;   // return 2 if update does not occur
 }
 
 bool NTPClient::isTimeSet() const {
@@ -133,7 +201,13 @@ bool NTPClient::isTimeSet() const {
 unsigned long NTPClient::getEpochTime() const {
   return this->_timeOffset + // User offset
          this->_currentEpoc + // Epoch returned by the NTP server
-         ((millis() - this->_lastUpdate) / 1000); // Time since last update
+         ((millis() - this->_lastUpdate + this->_current_epoc_dec*1000)/1000.0); // Time since last update
+}
+
+float NTPClient::get_millis() const{
+  float ms = millis() - this->_lastUpdate + this->_current_epoc_dec*1000.0;
+  ms-=(int)(ms/1000)*1000;
+  return ms;
 }
 
 int NTPClient::getDay() const {
@@ -178,7 +252,16 @@ void NTPClient::setUpdateInterval(unsigned long updateInterval) {
 }
 
 void NTPClient::setPoolServerName(const char* poolServerName) {
-    this->_poolServerName = poolServerName;
+  this->_poolServerName = poolServerName;
+}
+
+void NTPClient::setPoolServerIP(IPAddress server_ip){
+  this->_poolServerIP   = server_ip;
+  this->_poolServerName = NULL;
+}
+
+void NTPClient::setTimeout(uint16_t t_ms){
+   this->_ntp_timeout=t_ms;
 }
 
 void NTPClient::sendNTPPacket() {
